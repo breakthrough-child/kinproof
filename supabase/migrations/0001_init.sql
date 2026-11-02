@@ -2,7 +2,6 @@
 -- Privileged writes (PayPal identity, state transitions, events) happen only via the
 -- service role from server code; authenticated users get the narrow policies below.
 
-create extension if not exists pgcrypto;
 
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,

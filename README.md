@@ -75,7 +75,7 @@ pnpm dev            # http://localhost:3000
 With the defaults (`PAYPAL_MODE=mock`, `AI_MODE=mock`, no Supabase keys), the app runs entirely locally: in-memory store, simulated PayPal, rules-only AI. Click a demo user on `/login`. A banner shows whenever any mock is on. **Mock mode is for development and tests only. The deployed demo runs `sandbox` + `live`.**
 
 ```bash
-pnpm lint && pnpm typecheck && pnpm test      # 59 unit + integration tests
+pnpm lint && pnpm typecheck && pnpm test      # 73 unit, integration and RLS tests
 pnpm build && pnpm test:e2e                   # Playwright, mock mode
 ```
 (If Playwright's Chromium isn't installed, `pnpm exec playwright install chromium`, or point `PW_CHROMIUM_PATH` at an existing Chromium binary.)
