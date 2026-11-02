@@ -1,26 +1,91 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #f6f4ee;
+  --surface: #ffffff;
+  --surface-2: #efece3;
+  --ink: #1a2330;
+  --muted: #566170;
+  --line: #d9d4c6;
+  --primary: #1b6b60;
+  --primary-ink: #ffffff;
+  --primary-soft: #dcefeb;
+  --caution: #9a4a06;
+  --caution-soft: #fbead3;
+  --danger: #b3261e;
+  --danger-soft: #fbe3e0;
+  --ok: #2b7a4b;
+  --ok-soft: #dff1e6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1513;
+    --surface: #17211e;
+    --surface-2: #1f2c28;
+    --ink: #e9f0ee;
+    --muted: #a3b2ad;
+    --line: #2f403a;
+    --primary: #5cc2b1;
+    --primary-ink: #06201b;
+    --primary-soft: #1a3a34;
+    --caution: #f0b36b;
+    --caution-soft: #3a2a14;
+    --danger: #ff8a80;
+    --danger-soft: #3b1a17;
+    --ok: #7bd39d;
+    --ok-soft: #153322;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1513;
+  --surface: #17211e;
+  --surface-2: #1f2c28;
+  --ink: #e9f0ee;
+  --muted: #a3b2ad;
+  --line: #2f403a;
+  --primary: #5cc2b1;
+  --primary-ink: #06201b;
+  --primary-soft: #1a3a34;
+  --caution: #f0b36b;
+  --caution-soft: #3a2a14;
+  --danger: #ff8a80;
+  --danger-soft: #3b1a17;
+  --ok: #7bd39d;
+  --ok-soft: #153322;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-primary: var(--primary);
+  --color-primaryink: var(--primary-ink);
+  --color-primarysoft: var(--primary-soft);
+  --color-caution: var(--caution);
+  --color-cautionsoft: var(--caution-soft);
+  --color-danger: var(--danger);
+  --color-dangersoft: var(--danger-soft);
+  --color-ok: var(--ok);
+  --color-oksoft: var(--ok-soft);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-serif: ui-serif, Georgia, "Times New Roman", serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html { font-size: 17px; }
+html.large-text { font-size: 21px; }
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
+:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+button, a, input, select, textarea { touch-action: manipulation; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+@keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 45%, transparent); } 100% { box-shadow: 0 0 0 18px transparent; } }
+.pulse { animation: pulse-ring 1.6s ease-out infinite; }
