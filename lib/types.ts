@@ -29,6 +29,7 @@ export interface Profile {
   display_name: string;
   preferred_language: Language;
   large_text: boolean;
+  phone: string | null;
   created_at: string;
 }
 
