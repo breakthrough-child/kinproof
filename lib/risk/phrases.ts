@@ -1,0 +1,108 @@
+/**
+ * Phrase lists for the deterministic rules engine. English + Nigerian Pidgin (pcm).
+ * Patterns are case-insensitive regex sources. Add new phrasings here.
+ */
+export const PHRASES = {
+  urgency: [
+    "right now",
+    "immediately",
+    "\\burgent(ly)?\\b",
+    "\\bhurry\\b",
+    "as soon as possible",
+    "\\basap\\b",
+    "before they\\b",
+    "within (the )?(hour|next \\d+ minutes)",
+    "\\bquick(ly)?\\b",
+    "no time",
+    // pidgin
+    "now now",
+    "abeg send",
+    "\\bquick quick\\b",
+    "\\bfast fast\\b",
+    "e don do\\b",
+    "dem go (arrest|kill|beat)",
+  ],
+  secrecy: [
+    "don'?t tell (dad|daddy|mum|mummy|mom|anyone|anybody|your (dad|mum|father|mother|brother|sister))",
+    "do not tell",
+    "keep (this|it) (between us|secret|quiet)",
+    "\\bsecret\\b",
+    "(please )?don'?t (call|text) (dad|mum|anyone)",
+    // pidgin
+    "no tell (daddy|dad|mummy|mum|anybody|anyone|person)",
+    "make (you )?no tell",
+    "na between us",
+  ],
+  newNumber: [
+    "(this is )?my new (number|phone|line)",
+    "new number",
+    "(my )?phone (fell|was stolen|got stolen|is lost|got lost|broke|is broken|don (spoil|loss))",
+    "lost my phone",
+    "use this number",
+    "save this number",
+    "can'?t call",
+    // pidgin
+    "na my new number",
+    "this na my new",
+    "my phone don (loss|spoil|cut)",
+  ],
+  thirdParty: [
+    "(the |my )?(lawyer|attorney|barrister|officer|policeman|police officer|detective|doctor|agent|manager) (will|is going to|would) (call|contact|text|message)",
+    "send (it|the money|payment) to (the|my|a) (lawyer|officer|agent|manager|barrister)",
+    "(i'?m|i am) (with|at) (the )?(police|station)",
+    "bail",
+    "\\bcustoms\\b",
+    "\\bclearance fee\\b",
+    // pidgin
+    "(police|oga|lawyer|doctor) go (call|reach) you",
+    "send am give (the )?(police|officer|lawyer)",
+  ],
+  giftOrCrypto: [
+    "gift ?cards?",
+    "itunes",
+    "google play card",
+    "steam card",
+    "\\bbitcoin\\b",
+    "\\bbtc\\b",
+    "\\bcrypto(currency)?\\b",
+    "\\busdt\\b",
+    "wire transfer",
+    "western union",
+    "\\bzelle\\b",
+    "cash ?app",
+  ],
+  codes: [
+    "\\botp\\b",
+    "one[- ]time (code|password|pin)",
+    "verification code",
+    "\\bpassword\\b",
+    "\\bpin (code|number)\\b",
+    "(send|give|tell) me the code",
+    "security code",
+  ],
+  publicFigure: [
+    "\\bgiveaway\\b",
+    "\\bcelebrity\\b",
+    "\\bofficial (account|page)\\b",
+    "\\bfan ?(club|page)\\b",
+    "\\bwinner\\b",
+    "you('ve| have)? won",
+    "\\bprize\\b",
+    "\\bjackpot\\b",
+    "(i am|i'?m|this is) (the )?(real )?(burna ?boy|wizkid|davido|tiwa savage|elon musk|taylor swift|mr ?beast|beyonce|rihanna|drake)",
+    "\\b(burna ?boy|wizkid|davido|tiwa savage|elon musk|taylor swift|mr ?beast|beyonce|rihanna)\\b",
+  ],
+  injection: [
+    "ignore (all |any )?(previous|prior|above) (instructions|prompts?)",
+    "disregard (the )?(previous|above|prior)",
+    "this (message |request |payment )?is (safe|legit|legitimate|fine|verified)",
+    "(mark|rate|set|classify) (this |it |the risk )?(as )?(low|safe|no) ?risk",
+    "you are now",
+    "system prompt",
+    "new instructions",
+    "do not flag",
+    "risk[_ ]?score\\s*[:=]\\s*\\d+",
+  ],
+} as const;
+
+export type PhraseGroup = keyof typeof PHRASES;
