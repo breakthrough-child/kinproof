@@ -7,6 +7,7 @@ import { applyFloor, levelFor, type RulesResult } from "./rules";
 export interface AnalyzeInput {
   /** Untrusted text: pasted message and/or transcript. */
   message: string;
+  senderName?: string;
   claimedName: string | null;
   claimedRelationship: string | null;
   amount: number;
@@ -99,7 +100,7 @@ export function rulesOnlyAnalysis(i: AnalyzeInput, reason: "mock" | "error"): Ai
     requested_amount: i.amount,
     requested_method: null,
     mentioned_institution: mentionedInstitution,
-    confirmation_question: `Did you just ask for ${money(i)} to be sent to ${i.payeeEmail}?`,
+    confirmation_question: `Did you just ask ${i.senderName ?? "your family member"} for ${money(i)}?`,
     sender_explanation: explanation,
     recommended_action: level === "low" ? "confirm" : mentionedInstitution ? "redirect_to_institution" : "confirm",
     fallback: reason === "error" ? true : undefined,

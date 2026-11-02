@@ -108,6 +108,7 @@ export async function createAnalyzedRequest(userId: string, raw: unknown) {
   const sorted = [...history].sort((a, b) => a - b);
   const result = await analyze({
     message: text,
+    senderName: sender.display_name,
     claimedName,
     claimedRelationship: claimed?.relationship_label ?? null,
     amount: input.amount,

@@ -1,0 +1,42 @@
+# Render Blueprint. Note: Render cron jobs run on their own schedule; the web service
+# also expires holds lazily on every read, and the cron below calls the expiry endpoint each minute.
+services:
+  - type: web
+    name: kinproof
+    runtime: node
+    plan: starter
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+    startCommand: pnpm start
+    healthCheckPath: /
+    envVars:
+      - { key: NODE_VERSION, value: "22" }
+      - { key: NEXT_PUBLIC_APP_URL, sync: false }
+      - { key: NEXT_PUBLIC_SUPABASE_URL, sync: false }
+      - { key: NEXT_PUBLIC_SUPABASE_ANON_KEY, sync: false }
+      - { key: SUPABASE_SERVICE_ROLE_KEY, sync: false }
+      - { key: PAYPAL_MODE, value: sandbox }
+      - { key: PAYPAL_CLIENT_ID, sync: false }
+      - { key: PAYPAL_CLIENT_SECRET, sync: false }
+      - { key: PAYPAL_WEBHOOK_ID, sync: false }
+      - { key: NEXT_PUBLIC_PAYPAL_CLIENT_ID, sync: false }
+      - { key: AI_MODE, value: live }
+      - { key: ANTHROPIC_API_KEY, sync: false }
+      - { key: ANTHROPIC_MODEL, value: claude-sonnet-5-5 }
+      - { key: TRANSCRIBE_PROVIDER, value: groq }
+      - { key: GROQ_API_KEY, sync: false }
+      - { key: OPENAI_API_KEY, sync: false }
+      - { key: CONFIRM_WINDOW_MINUTES, value: "15" }
+      - { key: AUTO_RELEASE_MAX, value: "200" }
+      - { key: NGN_DISPLAY_RATE, value: "1550" }
+      - { key: DEMO_MODE, value: "true" }
+      - { key: DEMO_PASSWORD, sync: false }
+      - { key: CRON_SECRET, generateValue: true }
+  - type: cron
+    name: kinproof-expire
+    runtime: node
+    schedule: "* * * * *"
+    buildCommand: "true"
+    startCommand: curl -fsS -H "Authorization: Bearer $CRON_SECRET" "$NEXT_PUBLIC_APP_URL/api/cron/expire"
+    envVars:
+      - { key: CRON_SECRET, sync: false }
+      - { key: NEXT_PUBLIC_APP_URL, sync: false }
