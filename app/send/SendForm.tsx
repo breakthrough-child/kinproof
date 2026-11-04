@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Field, inputCls } from "@/components/ui";
 import { post } from "@/lib/useLive";
+import { toWav16k } from "@/lib/audio/toWav";
 
 type Circle = { id: string; name: string; members: { id: string; name: string; label: string; email: string | null }[] };
 const OTHER = "__other__";
@@ -33,7 +34,14 @@ export function SendForm({ circles, ngnRate }: { circles: Circle[]; ngnRate: num
     setErr(null);
     setNote("Listening to the voice note…");
     const fd = new FormData();
-    fd.append("audio", file, name);
+    try {
+      // Normalise to 16 kHz mono WAV in the browser (works for recordings and WhatsApp notes the browser can decode).
+      if (!/\.wav$/i.test(name)) {
+        fd.append("audio", await toWav16k(file), "voice.wav");
+      } else fd.append("audio", file, name);
+    } catch {
+      fd.append("audio", file, name); // browser can't decode it: the server will try (and transcode if it can)
+    }
     const r = await fetch("/api/transcribe", { method: "POST", body: fd });
     const j = await r.json().catch(() => ({}));
     setBusy(false);

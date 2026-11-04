@@ -2,7 +2,7 @@
 
 **Status: NOT YET RUN.** The build environment could not reach `developer.paypal.com` or `api-m.sandbox.paypal.com`, so everything below is a checklist to complete against real PayPal Sandbox before submitting. All automated tests (Vitest + Playwright) run against the mock PayPal client, which mirrors the same interface.
 
-Setup: `PAYPAL_MODE=sandbox`, `AI_MODE=live`, Supabase configured, `pnpm seed:demo` done. Ada pays from her sandbox personal account.
+Setup: `PAYPAL_MODE=sandbox`, `LLM_PROVIDER=gemini` + `GEMINI_API_KEY`, Supabase configured, `pnpm seed:demo` done. Ada pays from her sandbox personal account.
 
 ## Flow A: scam is blocked
 | Step | Expected | Observed |
@@ -27,6 +27,7 @@ Setup: `PAYPAL_MODE=sandbox`, `AI_MODE=live`, Supabase configured, `pnpm seed:de
 Original authorization voided, new order to the hospital's business account captured. Order ids: ____ → ____
 
 ## Extras
+- [ ] Live Gemini run: analysis returns valid structured output (check the request page shows no "AI check was unavailable" note) and a voice note transcribes (record in the browser and upload a WhatsApp `.opus`)
 - [ ] Webhook delivered + signature verified (`PAYMENT.AUTHORIZATION.VOIDED`, `PAYMENT.CAPTURE.COMPLETED`); duplicate delivery ignored
 - [ ] Expiry: no answer for 15 min → authorization voided by cron
 - [ ] Any PayPal debug ids for failures: ____

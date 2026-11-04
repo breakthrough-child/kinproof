@@ -19,10 +19,12 @@ services:
       - { key: PAYPAL_CLIENT_SECRET, sync: false }
       - { key: PAYPAL_WEBHOOK_ID, sync: false }
       - { key: NEXT_PUBLIC_PAYPAL_CLIENT_ID, sync: false }
-      - { key: AI_MODE, value: live }
+      - { key: LLM_PROVIDER, value: gemini }
+      - { key: GEMINI_API_KEY, sync: false }
+      - { key: GEMINI_MODEL, value: gemini-flash-latest }
       - { key: ANTHROPIC_API_KEY, sync: false }
       - { key: ANTHROPIC_MODEL, value: claude-sonnet-5-5 }
-      - { key: TRANSCRIBE_PROVIDER, value: groq }
+      - { key: TRANSCRIBE_PROVIDER, value: gemini }
       - { key: GROQ_API_KEY, sync: false }
       - { key: OPENAI_API_KEY, sync: false }
       - { key: CONFIRM_WINDOW_MINUTES, value: "15" }

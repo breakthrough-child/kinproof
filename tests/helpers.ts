@@ -10,7 +10,7 @@ export const OUTSIDER = "user-outsider";
 export const CIRCLE = "circle-okafors";
 
 export function freshWorld() {
-  process.env.AI_MODE = "mock";
+  process.env.LLM_PROVIDER = "mock";
   process.env.PAYPAL_MODE = "mock";
   delete process.env.NEXT_PUBLIC_SUPABASE_URL;
   const store = new MemoryStore();

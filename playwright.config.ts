@@ -22,6 +22,6 @@ export default defineConfig({
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
-    env: { PAYPAL_MODE: "mock", AI_MODE: "mock", NEXT_PUBLIC_SUPABASE_URL: "", SUPABASE_SERVICE_ROLE_KEY: "", DEMO_MODE: "true" },
+    env: { PAYPAL_MODE: "mock", LLM_PROVIDER: "mock", NEXT_PUBLIC_SUPABASE_URL: "", SUPABASE_SERVICE_ROLE_KEY: "", DEMO_MODE: "true" },
   },
 });
