@@ -33,15 +33,30 @@ export function useLive<T>(url: string | null, opts: { pollMs?: number; tables?:
     alive.current = true;
     const first = setTimeout(load, 0);
     const t = setInterval(load, pollMs);
-    const sb = supabaseBrowser();
-    const channel = sb
-      ? tablesKey.split(",").reduce((ch, table) => ch.on("postgres_changes", { event: "*", schema: "public", table }, () => load()), sb.channel(`live-${url}`)).subscribe()
-      : null;
+    // Realtime is an optimisation on top of polling: any failure to set it up is ignored.
+    let sb: ReturnType<typeof supabaseBrowser> = null;
+    let channel: ReturnType<NonNullable<ReturnType<typeof supabaseBrowser>>["channel"]> | null = null;
+    try {
+      sb = supabaseBrowser();
+      if (sb) {
+        channel = tablesKey
+          .split(",")
+          .reduce((ch, table) => ch.on("postgres_changes", { event: "*", schema: "public", table }, () => load()), sb.channel(`live-${url}`))
+          .subscribe();
+      }
+    } catch {
+      sb = null;
+      channel = null;
+    }
     return () => {
       alive.current = false;
       clearTimeout(first);
       clearInterval(t);
-      if (sb && channel) sb.removeChannel(channel);
+      try {
+        if (sb && channel) void sb.removeChannel(channel);
+      } catch {
+        /* ignore */
+      }
     };
   }, [load, pollMs, tablesKey, url]);
 

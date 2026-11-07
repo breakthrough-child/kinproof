@@ -1,9 +1,10 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Field, inputCls } from "@/components/ui";
 import { post } from "@/lib/useLive";
 import { toWav16k } from "@/lib/audio/toWav";
+import { canRecordAudio } from "@/lib/browser";
 
 type Circle = { id: string; name: string; members: { id: string; name: string; label: string; email: string | null }[] };
 const OTHER = "__other__";
@@ -23,6 +24,7 @@ export function SendForm({ circles, ngnRate }: { circles: Circle[]; ngnRate: num
   const [err, setErr] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const canRecord = useSyncExternalStore(() => () => {}, canRecordAudio, () => false);
   const rec = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
 
@@ -51,7 +53,14 @@ export function SendForm({ circles, ngnRate }: { circles: Circle[]; ngnRate: num
     setNote(j.mock ? "Saved. No speech-to-text key is set here, so please type what the voice note said below." : "Done. Check the words below and fix anything that is wrong.");
   }
   async function toggleRecord() {
-    if (recording) { rec.current?.stop(); return; }
+    if (recording) {
+      try { rec.current?.stop(); } catch { setRecording(false); }
+      return;
+    }
+    if (!canRecordAudio()) {
+      setErr("Recording isn't available in this browser. You can upload a voice note file or type the message instead.");
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mr = new MediaRecorder(stream);
@@ -127,7 +136,7 @@ export function SendForm({ circles, ngnRate }: { circles: Circle[]; ngnRate: num
               <input type="file" className="sr-only" accept="audio/*,.opus,.ogg,.m4a,.mp3,.wav,.webm" disabled={busy}
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f, f.name); }} />
             </label>
-            <Button type="button" variant={recording ? "danger" : "secondary"} onClick={toggleRecord} disabled={busy && !recording}>{recording ? "Stop recording" : "Record now"}</Button>
+            {canRecord && <Button type="button" variant={recording ? "danger" : "secondary"} onClick={toggleRecord} disabled={busy && !recording}>{recording ? "Stop recording" : "Record now"}</Button>}
           </div>
           <p className="mt-2 text-sm text-muted">WhatsApp voice notes (.opus, .ogg) work. Forward or save the note, then upload it.</p>
           {note && <p role="status" className="mt-2 text-base">{note}</p>}

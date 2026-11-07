@@ -3,6 +3,8 @@ import "./globals.css";
 import { Nav } from "@/components/Nav";
 import { ConfirmationOverlay } from "@/components/ConfirmationOverlay";
 import { PwaRegister } from "@/components/PwaRegister";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { DemoErrorReporter } from "@/components/DemoErrorReporter";
 import { getUserId } from "@/lib/auth/session";
 import { getStore } from "@/lib/store";
 import { mockBannerLabels } from "@/lib/config";
@@ -30,12 +32,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             Development mode: {mocks.join(" · ")}. Not the production setup.
           </div>
         )}
-        <Nav name={profile?.display_name ?? null} />
+        <ErrorBoundary label="nav"><Nav name={profile?.display_name ?? null} /></ErrorBoundary>
         <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-10">{children}</main>
         <footer className="border-t border-line bg-surface px-4 py-4 text-center text-sm text-muted">
           <strong className="text-ink">Sandbox demo — no real money moves.</strong> Kinproof is a hackathon prototype using PayPal Sandbox.
         </footer>
-        {userId && <ConfirmationOverlay />}
+        {userId && (
+          <ErrorBoundary label="confirmation overlay">
+            <ConfirmationOverlay />
+          </ErrorBoundary>
+        )}
+        <DemoErrorReporter />
         <PwaRegister />
       </body>
     </html>

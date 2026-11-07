@@ -15,7 +15,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
-        env: { PAYPAL_MODE: mock, LLM_PROVIDER: mock }
+        env: { PAYPAL_MODE: mock, LLM_PROVIDER: mock, DEMO_MODE: "true" }
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
         env: { CI: "true" }

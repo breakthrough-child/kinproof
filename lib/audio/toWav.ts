@@ -1,4 +1,5 @@
 "use client";
+import { closeAudioContext, createAudioContext, getOfflineAudioContextCtor } from "@/lib/browser";
 
 /** Encode mono float samples as a 16-bit PCM WAV blob. */
 export function encodeWav(samples: Float32Array, sampleRate: number): Blob {
@@ -30,12 +31,16 @@ export function encodeWav(samples: Float32Array, sampleRate: number): Blob {
  * which every speech-to-text provider accepts and which needs no server-side ffmpeg. Throws if the browser can't decode it.
  */
 export async function toWav16k(blob: Blob): Promise<Blob> {
-  const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-  const ctx = new Ctx();
+  const ctx = createAudioContext();
+  const Offline = getOfflineAudioContextCtor();
+  if (!ctx || !Offline) {
+    closeAudioContext(ctx);
+    throw new Error("Audio decoding is not supported in this browser");
+  }
   try {
     const decoded = await ctx.decodeAudioData(await blob.arrayBuffer());
     const rate = 16000;
-    const off = new OfflineAudioContext(1, Math.max(1, Math.ceil(decoded.duration * rate)), rate);
+    const off = new Offline(1, Math.max(1, Math.ceil(decoded.duration * rate)), rate);
     const src = off.createBufferSource();
     src.buffer = decoded;
     src.connect(off.destination);
@@ -43,6 +48,6 @@ export async function toWav16k(blob: Blob): Promise<Blob> {
     const rendered = await off.startRendering();
     return encodeWav(rendered.getChannelData(0), rate);
   } finally {
-    void ctx.close();
+    closeAudioContext(ctx);
   }
 }

@@ -1,22 +1,29 @@
 "use client";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Field, inputCls } from "@/components/ui";
+import { notificationPermission, requestNotificationPermission, type NotificationState } from "@/lib/browser";
 
 export function SettingsForm({ profile }: { profile: { display_name: string; preferred_language: "en" | "pcm"; large_text: boolean; phone: string | null } }) {
   const router = useRouter();
   const [p, setP] = useState(profile);
   const [msg, setMsg] = useState<string | null>(null);
-  const [notif, setNotif] = useState<string>(typeof Notification === "undefined" ? "unsupported" : Notification.permission);
+  // Server render and first client render agree ("unsupported"); the real value is read after hydration.
+  const detected = useSyncExternalStore(() => () => {}, notificationPermission, (): NotificationState => "unsupported");
+  const [asked, setAsked] = useState<NotificationState | null>(null);
+  const notif = asked ?? detected;
 
   async function save() {
-    const r = await fetch("/api/me", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...p, phone: p.phone || null }) });
-    setMsg(r.ok ? "Saved." : "Could not save.");
-    router.refresh();
+    try {
+      const r = await fetch("/api/me", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...p, phone: p.phone || null }) });
+      setMsg(r.ok ? "Saved." : "Could not save.");
+      router.refresh();
+    } catch {
+      setMsg("Could not save. Check your connection.");
+    }
   }
   async function enableNotifications() {
-    if (typeof Notification === "undefined") return;
-    setNotif(await Notification.requestPermission());
+    setAsked(await requestNotificationPermission());
   }
   return (
     <div className="mx-auto max-w-xl space-y-6">

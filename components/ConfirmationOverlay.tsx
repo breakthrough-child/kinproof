@@ -1,23 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { post, useLive } from "@/lib/useLive";
+import { closeAudioContext, createAudioContext, documentHidden, playBeep, showSystemNotification, vibrate } from "@/lib/browser";
 import type { AiAnalysis, Confirmation, TransferRequest } from "@/lib/types";
 import { Button, Money } from "./ui";
 
 type Inbox = { items: { confirmation: Confirmation; request: TransferRequest; senderName: string }[] };
-
-function beep(ctx: AudioContext) {
-  const o = ctx.createOscillator();
-  const g = ctx.createGain();
-  o.type = "sine";
-  o.frequency.value = 880;
-  g.gain.setValueAtTime(0.0001, ctx.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.02);
-  g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.5);
-  o.connect(g).connect(ctx.destination);
-  o.start();
-  o.stop(ctx.currentTime + 0.55);
-}
 
 export function ConfirmationOverlay() {
   const { data, reload } = useLive<Inbox>("/api/inbox", { pollMs: 2500, tables: ["confirmations", "transfer_requests"] });
@@ -34,23 +22,28 @@ export function ConfirmationOverlay() {
     return () => clearInterval(t);
   }, []);
 
-  // sound + system notification when a new request arrives
+  // Sound, vibration and a system notification when a new request arrives.
+  // Every browser API here is optional: if any is missing or blocked the on-screen card still shows.
   const id = item?.request.id ?? null;
+  const senderName = item?.senderName;
   useEffect(() => {
     if (!id || notified.current === id) return;
     notified.current = id;
-    try {
-      audio.current ??= new AudioContext();
-      beep(audio.current);
-      const rep = setInterval(() => audio.current && beep(audio.current), 4000);
-      setTimeout(() => clearInterval(rep), 20000);
-    } catch { /* autoplay blocked: the visual card is still unmissable */ }
-    try {
-      if ("Notification" in window && Notification.permission === "granted" && document.hidden) {
-        new Notification("Kinproof: please confirm", { body: `${item?.senderName} is sending money in your name. Was it you?`, tag: id });
-      }
-    } catch { /* ignore */ }
-  }, [id, item?.senderName]);
+    vibrate([200, 100, 200, 100, 400]);
+    audio.current ??= createAudioContext();
+    playBeep(audio.current);
+    const rep = setInterval(() => playBeep(audio.current), 4000);
+    const stop = setTimeout(() => clearInterval(rep), 20000);
+    if (documentHidden()) {
+      void showSystemNotification("Kinproof: please confirm", { body: `${senderName ?? "Someone"} is sending money in your name. Was it you?`, tag: id });
+    }
+    return () => {
+      clearInterval(rep);
+      clearTimeout(stop);
+    };
+  }, [id, senderName]);
+
+  useEffect(() => () => closeAudioContext(audio.current), []);
 
   if (!item && !result) return null;
 

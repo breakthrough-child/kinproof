@@ -1,11 +1,10 @@
 "use client";
 import { useEffect } from "react";
+import { registerServiceWorker } from "@/lib/browser";
 
 export function PwaRegister() {
   useEffect(() => {
-    if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
-    }
+    void registerServiceWorker();
   }, []);
   return null;
 }
