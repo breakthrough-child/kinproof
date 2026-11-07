@@ -177,7 +177,8 @@ export function RequestView({ id, paypalMode, paypalClientId, ngnRate }: { id: s
       )}
 
       {/* Sender actions */}
-      {data.isSender && status === "analyzed" && (
+      {/* Stay mounted through awaiting_paypal_approval: createOrder moves the request there while the popup is open, and unmounting the buttons would kill it (and block retries). */}
+      {data.isSender && (status === "analyzed" || status === "awaiting_paypal_approval") && (
         <Card>
           <h2 className="text-xl font-bold">{r.risk_level === "low" ? "Ready to send" : "Next: approve a hold in PayPal"}</h2>
           <p className="mb-4 mt-1 text-muted">{r.risk_level === "low" ? "This looks normal. After you approve in PayPal it will be sent." : "Your money will be held, not sent, until the real person confirms."}</p>
