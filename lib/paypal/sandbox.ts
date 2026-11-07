@@ -3,14 +3,16 @@ import {
   type AuthorizeResult,
   type CaptureResult,
   type CreateOrderInput,
+  type PayoutInput,
+  type PayoutResult,
   type PayPalClient,
 } from "./types";
 
 /**
- * Sandbox-only PayPal REST client (Orders v2 + Payments v2).
- * NOTE: endpoints below were written from memory of the PayPal REST docs because
- * developer.paypal.com was unreachable from the build environment. Verify them
- * against the live docs and a sandbox run (docs/SANDBOX_VERIFICATION.md).
+ * Sandbox-only PayPal REST client (Orders v2, Payments v2, Payouts v1).
+ * Money flow: the buyer's order is an AUTHORIZE against Kinproof's own merchant account (so we may
+ * capture or void it), and after confirmation the captured funds are forwarded with Payouts.
+ * Verified against the PayPal sandbox; see docs/SANDBOX_VERIFICATION.md.
  */
 export const PAYPAL_API = "https://api-m.sandbox.paypal.com";
 
@@ -86,7 +88,6 @@ export class SandboxPayPalClient implements PayPalClient {
             custom_id: i.transferRequestId,
             description: i.description ?? "Kinproof protected transfer",
             amount: { currency_code: i.currency, value: i.amount.toFixed(2) },
-            payee: { email_address: i.payeeEmail },
           },
         ],
       },
@@ -110,6 +111,30 @@ export class SandboxPayPalClient implements PayPalClient {
       `kinproof-capture-${idempotencyKey}`,
     );
     return { captureId: c.id, status: c.status };
+  }
+
+  async payout(i: PayoutInput): Promise<PayoutResult> {
+    const key = `kinproof-payout-${i.transferRequestId}`;
+    const r = await pp<{ batch_header: { payout_batch_id: string; batch_status: string } }>(
+      "POST",
+      "/v1/payments/payouts",
+      {
+        sender_batch_header: { sender_batch_id: key, email_subject: "You received a Kinproof protected transfer" },
+        items: [
+          {
+            recipient_type: "EMAIL",
+            receiver: i.receiverEmail,
+            amount: { currency: i.currency, value: i.amount.toFixed(2) },
+            note: "Kinproof protected transfer",
+            sender_item_id: i.transferRequestId,
+          },
+        ],
+      },
+      key,
+    );
+    const status = r.batch_header.batch_status;
+    if (status === "DENIED" || status === "CANCELED") throw new PayPalError(`Payout ${status}`, 422, undefined, r);
+    return { payoutBatchId: r.batch_header.payout_batch_id, status };
   }
 
   async void(authorizationId: string, idempotencyKey: string): Promise<void> {

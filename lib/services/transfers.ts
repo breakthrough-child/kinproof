@@ -233,18 +233,30 @@ async function afterHeld(req: TransferRequest): Promise<TransferRequest> {
 
 async function capture(requestId: string, actor: string | null): Promise<TransferRequest> {
   const store = getStore();
-  const req = (await store.getRequest(requestId))!;
+  let req = (await store.getRequest(requestId))!;
   if (!req.paypal_authorization_id) throw conflict("No authorization to capture.");
   if (req.status === "released") return req;
   assertTransition(req.status, "released");
+  // Step 1: capture the held funds into Kinproof's merchant account (skipped when a previous attempt already did).
+  if (!req.paypal_capture_id) {
+    try {
+      const cap = await getPayPal().capture(req.paypal_authorization_id, `${req.id}:capture`);
+      req = await store.updateRequest(req.id, { paypal_capture_id: cap.captureId });
+      await event(req.id, "captured", actor, { captureId: cap.captureId });
+    } catch (e) {
+      await event(req.id, "capture_failed", actor, { error: (e as Error).message });
+      throw new ServiceError("PayPal could not complete the payment. Nothing was lost; the money stays on hold.", 502, "paypal_error");
+    }
+  }
+  // Step 2: forward to the final recipient. Idempotent per request, so a retry after a failure is safe.
   try {
-    const cap = await getPayPal().capture(req.paypal_authorization_id, `${req.id}:capture`);
-    const next = await store.transition(req.id, [req.status], "released", { paypal_capture_id: cap.captureId });
-    await event(req.id, "captured", actor, { captureId: cap.captureId });
+    const out = await getPayPal().payout({ transferRequestId: req.id, receiverEmail: req.payee_email, amount: Number(req.amount), currency: req.currency });
+    const next = await store.transition(req.id, [req.status], "released");
+    await event(req.id, "paid_out", actor, { payoutBatchId: out.payoutBatchId, status: out.status });
     return next ?? (await store.getRequest(req.id))!;
   } catch (e) {
-    await event(req.id, "capture_failed", actor, { error: (e as Error).message });
-    throw new ServiceError("PayPal could not complete the payment. Nothing was lost; the money stays on hold.", 502, "paypal_error");
+    await event(req.id, "payout_failed", actor, { error: (e as Error).message });
+    throw new ServiceError("The payment was collected but could not be sent to the recipient yet. It will be retried; nothing is lost.", 502, "paypal_error");
   }
 }
 
@@ -329,7 +341,9 @@ export async function expireOverdue(now = new Date()) {
   let n = 0;
   for (const r of overdue) {
     try {
-      await expireOne(r);
+      // A confirmed request whose payout failed has already been captured: retry the payout, never void.
+      if (r.paypal_capture_id) await capture(r.id, null);
+      else await expireOne(r);
       n++;
     } catch (e) {
       console.error("[kinproof] expire failed", r.id, (e as Error).message);
@@ -416,13 +430,13 @@ export async function getRequestView(userId: string, requestId: string) {
   const store = getStore();
   let { req } = await loadRequestForMember(userId, requestId);
   // lazy expiry
-  if (req.status === "awaiting_confirmation" && confirmationExpired(req.confirm_expires_at)) {
+  if (req.status === "awaiting_confirmation" && !req.paypal_capture_id && confirmationExpired(req.confirm_expires_at)) {
     req = await expireOne(req).catch(() => req);
   }
   // reconcile a confirmed answer whose capture failed earlier
-  if (req.status === "awaiting_confirmation") {
+  if (req.status === "awaiting_confirmation" || req.status === "held") {
     const confs = await store.confirmationsForRequest(req.id);
-    if (confs.some((c) => c.response === "confirmed" || c.response === "vouched")) req = await capture(req.id, null).catch(() => req);
+    if (req.paypal_capture_id || confs.some((c) => c.response === "confirmed" || c.response === "vouched")) req = await capture(req.id, null).catch(() => req);
   }
   const [events, confs, members, institutions] = await Promise.all([
     store.listEvents(req.id),

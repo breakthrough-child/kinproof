@@ -5,6 +5,8 @@ import {
   type AuthorizeResult,
   type CaptureResult,
   type CreateOrderInput,
+  type PayoutInput,
+  type PayoutResult,
   type PayPalClient,
 } from "./types";
 
@@ -86,6 +88,14 @@ export class MockPayPalClient implements PayPalClient {
         if (o) await this.store.kvSet(`pp:order:${a.orderId}`, { ...o, status: "VOIDED" });
       }
       return { ok: true };
+    });
+  }
+
+  async payout(i: PayoutInput): Promise<PayoutResult> {
+    return this.idem(`payout:${i.transferRequestId}`, async () => {
+      const payoutBatchId = `MOCK-PAYOUT-${randomUUID().slice(0, 8).toUpperCase()}`;
+      await this.store.kvSet(`pp:payout:${payoutBatchId}`, { ...i, status: "SUCCESS" });
+      return { payoutBatchId, status: "SUCCESS" };
     });
   }
 

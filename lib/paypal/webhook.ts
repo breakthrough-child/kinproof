@@ -30,9 +30,10 @@ export async function handleWebhookEvent(ev: PayPalWebhookEvent): Promise<{ hand
       break;
     case "PAYMENT.CAPTURE.COMPLETED":
       await store.addEvent({ transfer_request_id: req.id, type: "webhook_capture_completed", payload: { captureId: ev.resource?.id } });
-      // Recovery: capture happened at PayPal but we never recorded it.
-      if (["held", "awaiting_confirmation"].includes(req.status)) {
-        await store.transition(req.id, [req.status], "released", { paypal_capture_id: ev.resource?.id ?? null });
+      // Recovery: capture happened at PayPal but we never recorded it. Only record the id; "released" means the
+      // payout to the recipient was accepted, which the next read/cron retry (capture -> payout) takes care of.
+      if (["held", "awaiting_confirmation"].includes(req.status) && !req.paypal_capture_id && ev.resource?.id) {
+        await store.updateRequest(req.id, { paypal_capture_id: ev.resource.id });
       }
       break;
     case "PAYMENT.CAPTURE.DENIED":

@@ -41,6 +41,28 @@ describe("genuine path", () => {
     expect(out.paypal_capture_id).toBeTruthy();
     expect(await paypal.authStatus(held.paypal_authorization_id!)).toBe("CAPTURED");
   });
+  it("collect then payout: capture, then forward to the payee, in that order", async () => {
+    const held = await startHeld({ message: "Mum I'm at St Luke's, they need a deposit.", amount: 350 });
+    await respondToConfirmation(CHIDI, held.id, "confirmed");
+    const types = (await store.listEvents(held.id)).map((e) => e.type);
+    expect(types.indexOf("captured")).toBeGreaterThan(-1);
+    expect(types.indexOf("paid_out")).toBeGreaterThan(types.indexOf("captured"));
+  });
+  it("payout failure after capture: stays unreleased, retry pays out without capturing twice", async () => {
+    const held = await startHeld({ message: "Mum I'm at St Luke's, they need a deposit.", amount: 350 });
+    const real = paypal.payout.bind(paypal);
+    let fail = true;
+    paypal.payout = async (i) => { if (fail) throw new Error("payouts down"); return real(i); };
+    await expect(respondToConfirmation(CHIDI, held.id, "confirmed")).rejects.toThrow();
+    const mid = (await store.getRequest(held.id))!;
+    expect(mid.status).not.toBe("released");
+    expect(mid.paypal_capture_id).toBeTruthy();
+    fail = false;
+    await getRequestView(ADA, held.id); // reconcile retries the payout
+    const done = (await store.getRequest(held.id))!;
+    expect(done.status).toBe("released");
+    expect((await store.listEvents(held.id)).filter((e) => e.type === "captured")).toHaveLength(1);
+  });
   it("low risk, verified payee, under cap auto-releases", async () => {
     const held = await startHeld({ amount: 50 });
     expect(held.status).toBe("released");

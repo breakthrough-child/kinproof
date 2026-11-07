@@ -8,6 +8,16 @@ let store: MemoryStore;
 let pp: MockPayPalClient;
 beforeEach(() => ({ store, paypal: pp } = freshWorld()));
 
+describe("mock PayPal: payout", () => {
+  it("payout is idempotent per transfer request", async () => {
+    const i = { transferRequestId: "r9", receiverEmail: "chidi@b.example", amount: 10, currency: "USD" };
+    const a = await pp.payout(i);
+    const b = await pp.payout(i);
+    expect(a.payoutBatchId).toBe(b.payoutBatchId);
+    expect(a.status).toBe("SUCCESS");
+  });
+});
+
 describe("mock PayPal: authorize / capture / void cycle", () => {
   const order = { transferRequestId: "r1", amount: 10, currency: "USD", payeeEmail: "a@b.example" };
   it("authorize then capture; capture is idempotent", async () => {
@@ -58,7 +68,9 @@ describe("webhooks", () => {
     expect(await handleWebhookEvent(ev)).toEqual({ handled: false, duplicate: true });
     const events = (await store.listEvents(req.id)).filter((e) => e.type === "webhook_capture_completed");
     expect(events).toHaveLength(1);
-    expect((await store.getRequest(req.id))!.status).toBe("released");
+    const after = (await store.getRequest(req.id))!;
+    expect(after.paypal_capture_id).toBe("CAP-1");
+    expect(after.status).toBe("held"); // released only once the payout to the recipient is accepted
   });
   it("ignores unknown requests and event types", async () => {
     expect((await handleWebhookEvent({ id: "WH-2", event_type: "PAYMENT.CAPTURE.COMPLETED", resource: { custom_id: "nope" } })).handled).toBe(false);
