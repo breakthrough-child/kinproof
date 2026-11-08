@@ -1,57 +1,70 @@
 @import "tailwindcss";
 
+/*
+ * Kinproof design tokens. Warm paper in light mode, warm ink in dark mode.
+ * Teal = trust. Amber = held. Brick = blocked. Every pair here clears WCAG AA (checked in docs/DESIGN.md).
+ */
 :root {
-  --bg: #f6f4ee;
-  --surface: #ffffff;
-  --surface-2: #efece3;
-  --ink: #1a2330;
-  --muted: #566170;
-  --line: #d9d4c6;
-  --primary: #1b6b60;
-  --primary-ink: #ffffff;
-  --primary-soft: #dcefeb;
-  --caution: #9a4a06;
-  --caution-soft: #fbead3;
-  --danger: #b3261e;
-  --danger-soft: #fbe3e0;
-  --ok: #2b7a4b;
-  --ok-soft: #dff1e6;
+  --bg: #f7f1e5;
+  --surface: #fffcf5;
+  --surface-2: #f0e8d6;
+  --ink: #1e2a2b;
+  --muted: #55605d;
+  --line: #dccfb4;
+  --primary: #14594f;
+  --primary-ink: #fffdf6;
+  --primary-soft: #dbeae3;
+  --caution: #7a4b00;
+  --caution-soft: #f9e9c3;
+  --danger: #8f3425;
+  --danger-ink: #fffdf6;
+  --danger-soft: #f6ddd5;
+  --ok: #1c6a43;
+  --ok-soft: #dcefe2;
+  --shadow: 0 1px 0 rgb(60 40 10 / 0.05), 0 12px 28px -20px rgb(60 40 10 / 0.45);
+  color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0e1513;
-    --surface: #17211e;
-    --surface-2: #1f2c28;
-    --ink: #e9f0ee;
-    --muted: #a3b2ad;
-    --line: #2f403a;
-    --primary: #5cc2b1;
-    --primary-ink: #06201b;
-    --primary-soft: #1a3a34;
-    --caution: #f0b36b;
-    --caution-soft: #3a2a14;
-    --danger: #ff8a80;
-    --danger-soft: #3b1a17;
-    --ok: #7bd39d;
-    --ok-soft: #153322;
+    --bg: #1b1713;
+    --surface: #252019;
+    --surface-2: #2f2920;
+    --ink: #f3ecdc;
+    --muted: #b9b09d;
+    --line: #43392c;
+    --primary: #7ccdb9;
+    --primary-ink: #0b2a23;
+    --primary-soft: #1f3a33;
+    --caution: #f2c374;
+    --caution-soft: #3b2c13;
+    --danger: #f0a08f;
+    --danger-ink: #3a130d;
+    --danger-soft: #3e211b;
+    --ok: #8fd6a7;
+    --ok-soft: #1c3526;
+    --shadow: 0 1px 0 rgb(0 0 0 / 0.3), 0 12px 28px -20px rgb(0 0 0 / 0.8);
+    color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0e1513;
-  --surface: #17211e;
-  --surface-2: #1f2c28;
-  --ink: #e9f0ee;
-  --muted: #a3b2ad;
-  --line: #2f403a;
-  --primary: #5cc2b1;
-  --primary-ink: #06201b;
-  --primary-soft: #1a3a34;
-  --caution: #f0b36b;
-  --caution-soft: #3a2a14;
-  --danger: #ff8a80;
-  --danger-soft: #3b1a17;
-  --ok: #7bd39d;
-  --ok-soft: #153322;
+  --bg: #1b1713;
+  --surface: #252019;
+  --surface-2: #2f2920;
+  --ink: #f3ecdc;
+  --muted: #b9b09d;
+  --line: #43392c;
+  --primary: #7ccdb9;
+  --primary-ink: #0b2a23;
+  --primary-soft: #1f3a33;
+  --caution: #f2c374;
+  --caution-soft: #3b2c13;
+  --danger: #f0a08f;
+  --danger-ink: #3a130d;
+  --danger-soft: #3e211b;
+  --ok: #8fd6a7;
+  --ok-soft: #1c3526;
+  --shadow: 0 1px 0 rgb(0 0 0 / 0.3), 0 12px 28px -20px rgb(0 0 0 / 0.8);
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -67,25 +80,87 @@
   --color-caution: var(--caution);
   --color-cautionsoft: var(--caution-soft);
   --color-danger: var(--danger);
+  --color-dangerink: var(--danger-ink);
   --color-dangersoft: var(--danger-soft);
   --color-ok: var(--ok);
   --color-oksoft: var(--ok-soft);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-serif: ui-serif, Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-source), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-serif: var(--font-fraunces), ui-serif, Georgia, "Times New Roman", serif;
+  --shadow-card: var(--shadow);
 }
 
-html { font-size: 17px; }
+html { font-size: 17px; -webkit-text-size-adjust: 100%; }
 html.large-text { font-size: 21px; }
 body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
-  line-height: 1.5;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
-:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--font-serif); letter-spacing: -0.012em; line-height: 1.15; text-wrap: balance; }
+p { text-wrap: pretty; }
+:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; border-radius: 6px; }
 button, a, input, select, textarea { touch-action: manipulation; }
-@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+::selection { background: var(--primary-soft); }
 
-@keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 45%, transparent); } 100% { box-shadow: 0 0 0 18px transparent; } }
-.pulse { animation: pulse-ring 1.6s ease-out infinite; }
+/* Safe-area helpers for notched phones */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+.pt-safe { padding-top: env(safe-area-inset-top); }
+
+/* Paper grain: a barely-there texture so the page doesn't read as a flat screen */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.5;
+  background-image: radial-gradient(color-mix(in srgb, var(--line) 55%, transparent) 0.6px, transparent 0.6px);
+  background-size: 14px 14px;
+  mask-image: linear-gradient(to bottom, rgb(0 0 0 / 0.5), transparent 60%);
+}
+
+/* ---- Motion: only the hold, confirm/block, and stamp moments move ---- */
+@keyframes stamp {
+  0% { transform: scale(1.9) rotate(-18deg); opacity: 0; }
+  55% { transform: scale(0.93) rotate(-5deg); opacity: 1; }
+  75% { transform: scale(1.04) rotate(-4deg); }
+  100% { transform: scale(1) rotate(-4deg); opacity: 1; }
+}
+.stamp { animation: stamp 520ms cubic-bezier(0.2, 0.9, 0.3, 1.1) both; transform-origin: center; }
+.seal-static { transform: rotate(-4deg); }
+
+@keyframes hold-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--caution) 35%, transparent); }
+  50% { box-shadow: 0 0 0 10px transparent; }
+}
+.holding { animation: hold-breathe 2.4s ease-in-out infinite; }
+
+@keyframes sheet-up {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.sheet-up { animation: sheet-up 260ms ease-out both; }
+
+@keyframes shimmer { to { background-position: -200% 0; } }
+.skeleton {
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--surface-2) 25%, color-mix(in srgb, var(--surface-2) 60%, var(--surface)) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* Highlighted quote inside the original message */
+mark.quote {
+  background: color-mix(in srgb, var(--caution-soft) 90%, transparent);
+  color: var(--ink);
+  border-bottom: 2px solid var(--caution);
+  padding: 0 0.15em;
+  border-radius: 3px;
+}

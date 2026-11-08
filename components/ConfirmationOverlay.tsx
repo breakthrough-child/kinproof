@@ -3,7 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { post, useLive } from "@/lib/useLive";
 import { closeAudioContext, createAudioContext, documentHidden, playBeep, showSystemNotification, vibrate } from "@/lib/browser";
 import type { AiAnalysis, Confirmation, TransferRequest } from "@/lib/types";
-import { Button, Money } from "./ui";
+import { Avatar, Button, Money } from "./ui";
+import { Seal } from "./Seal";
+import { IconCheck, IconX } from "./icons";
 
 type Inbox = { items: { confirmation: Confirmation; request: TransferRequest; senderName: string }[] };
 
@@ -48,11 +50,13 @@ export function ConfirmationOverlay() {
   if (!item && !result) return null;
 
   if (result && !item) {
+    const yes = result === "confirmed";
     return (
-      <div role="status" className="fixed inset-x-0 bottom-0 z-50 p-4">
-        <div className="mx-auto max-w-lg rounded-2xl border border-line bg-surface p-5 text-center shadow-xl">
-          <p className="text-lg font-semibold">{result === "confirmed" ? "Thank you. The money is on its way." : "Thank you. The payment was stopped and the money was returned."}</p>
-          <Button className="mt-3" variant="secondary" onClick={() => setResult(null)}>Close</Button>
+      <div role="status" className="fixed inset-0 z-50 grid place-items-center bg-ink/60 p-4 sm:p-6">
+        <div className="sheet-up w-full max-w-md rounded-[24px] bg-surface p-8 text-center shadow-2xl">
+          <div className="flex justify-center"><Seal kind={yes ? "released" : "blocked"} size={128} stamp /></div>
+          <p className="mt-5 font-serif text-2xl font-semibold">{yes ? "Thank you. The money is on its way." : "Thank you. The payment was stopped and the money was returned."}</p>
+          <Button className="mt-6 min-h-14 w-full text-lg" variant="secondary" onClick={() => setResult(null)}>Close</Button>
         </div>
       </div>
     );
@@ -64,6 +68,7 @@ export function ConfirmationOverlay() {
   const msLeft = r.confirm_expires_at ? new Date(r.confirm_expires_at).getTime() - now : 0;
   const mm = Math.max(0, Math.floor(msLeft / 60000));
   const ss = Math.max(0, Math.floor((msLeft % 60000) / 1000));
+  const frac = Math.max(0, Math.min(1, msLeft / (15 * 60000)));
   const question = ai?.confirmation_question || `Did you just ask ${item.senderName} for money?`;
   const text = [r.raw_message, r.transcript].filter(Boolean).join("\n\n");
 
@@ -77,30 +82,50 @@ export function ConfirmationOverlay() {
     reload();
   }
 
+  const R = 22;
+  const C = 2 * Math.PI * R;
   return (
     <div role="alertdialog" aria-modal="true" aria-labelledby="conf-title" aria-describedby="conf-q"
-      className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-ink/70 p-0 sm:items-center sm:p-6">
-      <div className="w-full max-w-xl rounded-t-3xl bg-surface p-6 shadow-2xl sm:rounded-3xl">
-        <p className="text-sm font-bold uppercase tracking-wide text-primary">Please check, this needs you</p>
-        <h2 id="conf-title" className="mt-1 text-2xl font-bold">{item.senderName} is sending <Money amount={r.amount} /> in your name</h2>
-        <p id="conf-q" className="mt-4 rounded-2xl bg-primarysoft p-4 text-xl font-semibold leading-snug text-ink">{question}</p>
-        <dl className="mt-4 grid grid-cols-2 gap-3 text-base">
-          <div><dt className="text-sm text-muted">Amount</dt><dd className="font-semibold"><Money amount={r.amount} currency={r.currency} /></dd></div>
-          <div><dt className="text-sm text-muted">Paying</dt><dd className="break-all font-semibold">{r.payee_email}</dd></div>
-        </dl>
-        {text && (
-          <details className="mt-3 rounded-xl border border-line p-3">
-            <summary className="cursor-pointer font-semibold">What the message said</summary>
-            <p className="mt-2 whitespace-pre-wrap text-base text-muted">{text}</p>
-          </details>
-        )}
-        <p className="mt-4 text-center text-base text-muted" aria-live="off">
-          Time left to answer: <strong className="tabular-nums text-ink">{mm}:{String(ss).padStart(2, "0")}</strong>. If you don&apos;t answer, the money goes back automatically.
-        </p>
-        {err && <p role="alert" className="mt-3 rounded-xl bg-dangersoft p-3 text-danger">{err}</p>}
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <Button disabled={busy} onClick={() => answer("confirmed")} className="min-h-16 text-lg">Yes, it was me</Button>
-          <Button disabled={busy} variant="danger" onClick={() => answer("denied")} className="min-h-16 text-lg">No, that wasn&apos;t me</Button>
+      className="fixed inset-0 z-50 flex h-dvh flex-col bg-bg sm:items-center sm:justify-center sm:bg-ink/70 sm:p-6">
+      <div className="sheet-up flex min-h-0 w-full flex-1 flex-col bg-bg sm:max-w-xl sm:flex-none sm:overflow-hidden sm:rounded-[28px] sm:shadow-2xl sm:max-h-[92dvh]">
+        {/* Scrollable story: who, how much, what was said */}
+        <div className="pt-safe min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-5 sm:px-8 sm:pt-8">
+          <p className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.14em] text-caution">
+            <span className="holding inline-block h-2.5 w-2.5 rounded-full bg-caution" />Money on hold · this needs you
+          </p>
+          <div className="mt-4 flex items-center gap-3">
+            <Avatar name={item.senderName} size={52} />
+            <h2 id="conf-title" className="text-2xl font-semibold leading-tight">{item.senderName} is sending <Money amount={r.amount} /> in your name</h2>
+          </div>
+          <p id="conf-q" className="mt-5 font-serif text-[1.65rem] font-semibold leading-snug sm:text-3xl">{question}</p>
+          <dl className="mt-5 grid grid-cols-2 gap-3 rounded-[16px] border border-line bg-surface p-4">
+            <div><dt className="text-sm text-muted">Amount</dt><dd className="font-serif text-3xl font-semibold tabular-nums"><Money amount={r.amount} currency={r.currency} /></dd></div>
+            <div className="min-w-0"><dt className="text-sm text-muted">To</dt><dd className="break-all text-base font-semibold">{r.payee_email}</dd></div>
+          </dl>
+          {text && (
+            <figure className="mt-3 rounded-[16px] border border-line bg-surface p-4">
+              <figcaption className="mb-1 text-sm font-bold uppercase tracking-wide text-muted">What the message said</figcaption>
+              <p className="whitespace-pre-wrap text-base leading-relaxed">{text}</p>
+            </figure>
+          )}
+          <div className="mt-4 flex items-center gap-3">
+            <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true" className="shrink-0 -rotate-90 text-caution">
+              <circle cx="26" cy="26" r={R} fill="none" stroke="var(--line)" strokeWidth="4" />
+              <circle cx="26" cy="26" r={R} fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - frac)} style={{ transition: "stroke-dashoffset 1s linear" }} />
+            </svg>
+            <p className="text-base text-muted" aria-live="off">
+              <strong className="text-xl tabular-nums text-ink">{mm}:{String(ss).padStart(2, "0")}</strong> left to answer. If you don&apos;t, the money goes back automatically.
+            </p>
+          </div>
+          {err && <p role="alert" className="mt-3 rounded-[14px] bg-dangersoft p-3 font-medium text-danger">{err}</p>}
+        </div>
+
+        {/* Thumb zone: two huge buttons at the bottom of the screen, safe-area aware */}
+        <div className="pb-safe shrink-0 border-t border-line bg-surface px-5 pb-4 pt-4 sm:px-8 sm:pb-8">
+          <div className="grid gap-3">
+            <Button disabled={busy} onClick={() => answer("confirmed")} className="min-h-[4.5rem] text-xl"><IconCheck size={26} />Yes, it was me</Button>
+            <Button disabled={busy} variant="danger" onClick={() => answer("denied")} className="min-h-[4.5rem] text-xl"><IconX size={26} />No, that wasn&apos;t me</Button>
+          </div>
         </div>
       </div>
     </div>

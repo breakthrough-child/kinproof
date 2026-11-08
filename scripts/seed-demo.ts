@@ -8,7 +8,7 @@
  * immediately. In real use each member links through "Log in with PayPal" on /circle.
  */
 import { createClient } from "@supabase/supabase-js";
-import { DEMO, demoEmail } from "../lib/store/seed.ts";
+import { DEMO } from "../lib/store/seed.ts";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -17,6 +17,13 @@ if (!url || !key || !password) {
   console.error("Set NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and DEMO_PASSWORD (sandbox-only demo password).");
   process.exit(1);
 }
+// Every PayPal email comes from the environment. No placeholders: a wrong payee in a sandbox run is worse than a failed seed.
+const missing = [...DEMO.users, ...DEMO.institutions].map((x) => x.envEmail).filter((name) => !process.env[name]?.trim());
+if (missing.length) {
+  console.error(`Missing PayPal email env var${missing.length > 1 ? "s" : ""}: ${missing.join(", ")}. Set ${missing.length > 1 ? "them" : "it"} in .env.local (sandbox account emails) and run again.`);
+  process.exit(1);
+}
+const demoEmail = (x: { envEmail: string }): string => process.env[x.envEmail]!.trim();
 const db = createClient(url, key, { auth: { persistSession: false } });
 const ok = <T>(r: { data: T; error: { message: string } | null }, what: string): T => {
   if (r.error) throw new Error(`${what}: ${r.error.message}`);

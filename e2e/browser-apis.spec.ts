@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import { sendRequest } from "./helpers";
 
 const SCAM =
   "Mum it's me, my phone fell so this is my new number. I'm in an accident, don't tell Dad. The lawyer will call you, send $800 right now to this account.";
@@ -46,10 +47,7 @@ for (const [label, init] of [["missing", REMOVE_APIS], ["throwing", HOSTILE_APIS
       const chidi = await open(browser, "Chidi", init);
 
       await ada.page.goto("/send");
-      await ada.page.getByLabel(/What did they say/).fill(SCAM);
-      await ada.page.getByLabel(/How much/).fill("800");
-      await ada.page.getByLabel(/PayPal email to pay/).fill("scammer@evil.example");
-      await ada.page.getByRole("button", { name: "Check this request" }).click();
+      await sendRequest(ada.page, { message: SCAM, amount: "800", payee: "scammer@evil.example" });
       await ada.page.waitForURL(/\/requests\//);
       await ada.page.getByRole("button", { name: /Approve in PayPal/ }).click();
       await expect(ada.page.getByText(/We are asking Chidi right now/)).toBeVisible();

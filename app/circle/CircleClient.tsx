@@ -1,7 +1,9 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Badge, Button, Card, Field, inputCls } from "@/components/ui";
+import { Avatar, Badge, Button, Card, EmptyState, Field, inputCls, PageHeader } from "@/components/ui";
+import { Seal } from "@/components/Seal";
+import { IconAlert, IconCheck, IconLink, IconUsers } from "@/components/icons";
 import { post } from "@/lib/useLive";
 
 type CircleVM = {
@@ -37,33 +39,37 @@ export function CircleClient({ circles, linkResult }: { circles: CircleVM[]; lin
   }
 
   return (
-    <div className="space-y-8">
-      <h1 className="font-serif text-3xl font-bold">My circle</h1>
-      {msg && <p role="status" className="rounded-xl bg-primarysoft p-3 text-primary">{msg}</p>}
+    <div className="mx-auto max-w-3xl space-y-8">
+      <PageHeader eyebrow="The people who can vouch for each other" title="My circle">Each person links their own PayPal, so Kinproof knows who is real. Nobody can type in someone else&apos;s.</PageHeader>
+      {msg && <p role="status" className="flex gap-2.5 rounded-[14px] bg-primarysoft p-3.5 font-medium text-primary"><IconCheck size={22} className="mt-0.5 shrink-0" />{msg}</p>}
+      {circles.length === 0 && <EmptyState icon={IconUsers} title="You aren’t in a circle yet.">Start one for your family, or join with the invite code someone sent you.</EmptyState>}
       {circles.map(({ circle, members, myMemberId }) => (
         <Card key={circle.id}>
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="text-2xl font-bold">{circle.name}</h2>
-            <p className="text-muted">Invite code: <code className="rounded bg-surface2 px-2 py-1 font-mono text-ink">{circle.invite_code}</code></p>
+            <h2 className="text-3xl font-semibold">{circle.name}</h2>
+            <p className="text-muted">Invite code <code className="ml-1 rounded-lg bg-surface2 px-2.5 py-1 font-mono text-base tracking-widest text-ink">{circle.invite_code}</code></p>
           </div>
           <ul className="mt-4 divide-y divide-line">
             {members.map((m) => (
-              <li key={m.id} className="flex flex-wrap items-center gap-3 py-3">
-                <div className="min-w-0 flex-1">
+              <li key={m.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-4">
+                <Avatar name={m.name} size={52} />
+                <div className="min-w-0 flex-1 basis-40">
                   <p className="text-lg font-semibold">{m.name} <span className="font-normal text-muted">· {m.label}{m.mine ? " (you)" : ""}</span></p>
                   {m.email && <p className="truncate text-sm text-muted">{m.email}</p>}
                 </div>
-                {m.verified ? <Badge tone="ok">PayPal verified</Badge> : <Badge tone="caution">PayPal not linked</Badge>}
-                {m.mine && <Button variant={m.verified ? "secondary" : "primary"} disabled={busy} onClick={() => link(myMemberId)}>{m.verified ? "Re-link PayPal" : "Link PayPal"}</Button>}
+                {m.verified ? (
+                  <span className="inline-flex items-center gap-2 text-sm font-semibold text-ok"><Seal kind="verified" size={34} label="" className="text-ok" />PayPal verified</span>
+                ) : <Badge tone="caution" icon={IconAlert}>PayPal not linked</Badge>}
+                {m.mine && <Button variant={m.verified ? "secondary" : "primary"} disabled={busy} onClick={() => link(myMemberId)}><IconLink size={20} />{m.verified ? "Re-link PayPal" : "Link PayPal"}</Button>}
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-sm text-muted">Linking uses Log in with PayPal, so Kinproof knows each person&apos;s real PayPal account. Nobody can type in someone else&apos;s.</p>
+          <p className="mt-3 text-sm text-muted">Linking uses Log in with PayPal, so Kinproof knows each person&apos;s real PayPal account.</p>
         </Card>
       ))}
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
-          <h2 className="text-xl font-bold">Start a circle</h2>
+          <h2 className="text-2xl font-semibold">Start a circle</h2>
           <div className="mt-3 space-y-3">
             <Field label="Circle name"><input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder="The Okafors" /></Field>
             <Field label="What do they call you?" hint="e.g. Mum, Son, Auntie"><input className={inputCls} value={label} onChange={(e) => setLabel(e.target.value)} /></Field>
@@ -71,7 +77,7 @@ export function CircleClient({ circles, linkResult }: { circles: CircleVM[]; lin
           </div>
         </Card>
         <Card>
-          <h2 className="text-xl font-bold">Join with an invite code</h2>
+          <h2 className="text-2xl font-semibold">Join with an invite code</h2>
           <div className="mt-3 space-y-3">
             <Field label="Invite code"><input className={inputCls} value={code} onChange={(e) => setCode(e.target.value)} /></Field>
             <Field label="What do they call you?"><input className={inputCls} value={label} onChange={(e) => setLabel(e.target.value)} /></Field>

@@ -1,6 +1,8 @@
 import { requireUserOrRedirect } from "@/lib/auth/session";
 import { getStore } from "@/lib/store";
-import { Badge, Card } from "@/components/ui";
+import { Card, EmptyState, PageHeader } from "@/components/ui";
+import { Seal } from "@/components/Seal";
+import { IconBuilding } from "@/components/icons";
 
 export const metadata = { title: "Verified payees · Kinproof" };
 
@@ -8,26 +10,31 @@ export default async function Institutions() {
   await requireUserOrRedirect();
   const list = await getStore().listInstitutions();
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-serif text-3xl font-bold">Verified payees</h1>
-        <p className="mt-2 max-w-2xl text-lg text-muted">Hospitals, schools and other organisations we&apos;ve checked. Paying one of these directly is the safest way to help when you can&apos;t reach your family member. A scammer can&apos;t receive money this way. Anyone claiming to be a public figure or brand who is <em>not</em> listed here is flagged as high risk.</p>
-      </div>
-      <ul className="grid gap-4 md:grid-cols-2">
-        {list.map((i) => (
-          <li key={i.id}>
-            <Card className="h-full">
-              <div className="flex items-start justify-between gap-3">
-                <h2 className="text-xl font-bold">{i.name}</h2>
-                {i.verified && <Badge tone="ok">Verified</Badge>}
-              </div>
-              <p className="mt-1 text-muted capitalize">{i.kind.replace("_", " ")}{i.city ? ` · ${i.city}` : ""}</p>
-              <p className="mt-2 break-all text-sm text-muted">PayPal: {i.paypal_email}</p>
-              {i.notes && <p className="mt-1 text-sm text-muted">{i.notes}</p>}
-            </Card>
-          </li>
-        ))}
-      </ul>
+    <div className="mx-auto max-w-3xl">
+      <PageHeader eyebrow="Safe to pay" title="Verified payees">
+        Hospitals, schools and other organisations we&apos;ve checked. Paying one of these directly is the safest way to help when you can&apos;t reach your family member: a scammer can&apos;t receive money this way. Anyone claiming to be a public figure or brand who is <em>not</em> listed here is flagged as high risk.
+      </PageHeader>
+      {list.length === 0 ? (
+        <EmptyState icon={IconBuilding} title="No verified payees yet.">Organisations will appear here once they have been checked.</EmptyState>
+      ) : (
+        <ul className="grid gap-4 sm:grid-cols-2">
+          {list.map((i) => (
+            <li key={i.id}>
+              <Card className="h-full">
+                <div className="flex items-start gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-xl font-semibold">{i.name}</h2>
+                    <p className="mt-0.5 text-muted capitalize">{i.kind.replace("_", " ")}{i.city ? ` · ${i.city}` : ""}</p>
+                  </div>
+                  {i.verified && <Seal kind="verified" size={52} />}
+                </div>
+                <p className="mt-3 break-all text-sm text-muted">PayPal: {i.paypal_email}</p>
+                {i.notes && <p className="mt-1 text-sm text-muted">{i.notes}</p>}
+              </Card>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

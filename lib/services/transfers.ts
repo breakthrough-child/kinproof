@@ -495,7 +495,14 @@ export async function inboxFor(userId: string) {
 export async function listMyRequests(userId: string) {
   const store = getStore();
   const ms = await store.membershipsForUser(userId);
-  return store.requestsForCircles([...new Set(ms.map((m) => m.circle_id))], 30);
+  const requests = await store.requestsForCircles([...new Set(ms.map((m) => m.circle_id))], 30);
+  // Names and "is this me" so the list can be worded from the viewer's point of view.
+  const senders: Record<string, { name: string; isMe: boolean }> = {};
+  for (const id of new Set(requests.map((r) => r.sender_member_id))) {
+    const m = await store.getMember(id);
+    senders[id] = { name: m?.display_name ?? "Someone", isMe: ms.some((x) => x.id === id) };
+  }
+  return { requests, senders };
 }
 
 export { findInstitutionByEmail };

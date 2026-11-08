@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, Field, inputCls } from "@/components/ui";
+import { Avatar, Button, Card, Field, inputCls, PageHeader } from "@/components/ui";
+import { IconAlert, IconCheck } from "@/components/icons";
 import { post } from "@/lib/useLive";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
@@ -48,20 +49,29 @@ export function LoginForm({ demo, supabase, demoUsers }: { demo: boolean; supaba
     else setMsg({ tone: "ok", text: "Account created. Check your email to confirm it, then sign in." });
   }
 
+  const roles: Record<string, string> = { ada: "Sends the money", chidi: "Confirms on his phone", ngozi: "Can vouch" };
   return (
     <div className="mx-auto max-w-xl space-y-6">
-      <h1 className="font-serif text-3xl font-bold">Sign in</h1>
+      <PageHeader eyebrow="Welcome back" title="Sign in" />
       {demo && (
         <Card tone="primary">
-          <h2 className="text-xl font-bold">One-click demo</h2>
-          <p className="mt-1 text-muted">Sign in as a seeded member of The Okafors. Open a second browser window to be Chidi while Ada sends money.</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <h2 className="text-2xl font-semibold">Meet The Okafors</h2>
+          <p className="mt-1 text-lg">Pick a family member to be. Open a second browser window to be Chidi while Ada sends money.</p>
+          <ul className="mt-4 grid gap-3">
             {demoUsers.map((u) => (
-              <Button key={u.key} variant={u.key === "ada" ? "primary" : "secondary"} disabled={busy} onClick={() => demoLogin(u.key)} className="flex-col !gap-0 py-3">
-                <span>{u.name}</span><span className="text-sm font-normal opacity-80">{u.label}{u.key === "ada" ? " · sends" : u.key === "chidi" ? " · confirms" : ""}</span>
-              </Button>
+              <li key={u.key}>
+                <button type="button" disabled={busy} onClick={() => demoLogin(u.key)}
+                  className="flex min-h-[4.5rem] w-full items-center gap-4 rounded-[16px] border border-line bg-surface p-3 text-left shadow-card transition-colors hover:border-primary hover:bg-surface2 disabled:opacity-50">
+                  <Avatar name={u.name} size={52} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-serif text-xl font-semibold">{u.name}</span>
+                    <span className="block text-base text-muted">{u.label} · {roles[u.key] ?? "Circle member"}</span>
+                  </span>
+                  <span aria-hidden="true" className="text-sm font-semibold text-primary">Sign in →</span>
+                </button>
+              </li>
             ))}
-          </div>
+          </ul>
         </Card>
       )}
       {supabase && (
@@ -77,7 +87,7 @@ export function LoginForm({ demo, supabase, demoUsers }: { demo: boolean; supaba
           </form>
         </Card>
       )}
-      {msg && <p role="alert" className={`rounded-xl p-3 ${msg.tone === "ok" ? "bg-oksoft text-ok" : "bg-dangersoft text-danger"}`}>{msg.text}</p>}
+      {msg && <p role="alert" className={`flex gap-2.5 rounded-[14px] p-3.5 font-medium ${msg.tone === "ok" ? "bg-oksoft text-ok" : "bg-dangersoft text-danger"}`}>{msg.tone === "ok" ? <IconCheck size={22} className="mt-0.5 shrink-0" /> : <IconAlert size={22} className="mt-0.5 shrink-0" />}{msg.text}</p>}
     </div>
   );
 }
