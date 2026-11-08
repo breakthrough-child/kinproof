@@ -8,6 +8,10 @@ test("viewer-aware wording: Chidi sees Ada's name, Ada sees 'your'", async ({ br
   const chidi = await signIn(browser, "Chidi");
   await sendRequest(ada, { message: SCAM, amount: "800", payee: "scammer@evil.example" });
   await ada.waitForURL(/\/requests\//);
+  // Preparing the PayPal order (what the PayPal button does first) moves the request to "waiting for approval".
+  const order = await ada.request.post(`/api/requests/${ada.url().split("/").pop()}/order`);
+  expect(order.ok()).toBe(true);
+  await ada.reload();
   await expect(ada.getByText("Waiting for your PayPal approval").first()).toBeVisible();
   await chidi.goto(ada.url());
   await expect(chidi.getByText("Waiting for Ada's PayPal approval").first()).toBeVisible();
@@ -26,7 +30,9 @@ test("payee is prefilled with the asker's verified PayPal and a different addres
   await expect(ada.getByText(/isn.t Chidi.s verified PayPal account/)).toHaveCount(0);
   const original = await payee.inputValue();
   await payee.fill("someone.else@evil.example");
-  await expect(ada.getByText(/This isn.t Chidi.s verified PayPal account\./)).toBeVisible();
+  // The warning is also rendered (hidden) in the review step, so look only at what is on screen.
+  const warning = ada.locator("p:visible", { hasText: /This isn.t Chidi.s verified PayPal account\./ });
+  await expect(warning).toHaveCount(1);
   await ada.getByRole("button", { name: /Use Chidi.s verified PayPal/ }).click();
   await expect(payee).toHaveValue(original);
   await expect(ada.getByText(/isn.t Chidi.s verified PayPal account/)).toHaveCount(0);

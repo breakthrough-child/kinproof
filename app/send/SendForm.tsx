@@ -269,10 +269,11 @@ export function SendForm({ circles, ngnRate }: { circles: Circle[]; ngnRate: num
       <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 -mx-4 mt-6 border-t border-line bg-bg/95 px-4 py-3 backdrop-blur-sm md:bottom-0">
         <div className="mx-auto flex max-w-2xl gap-3">
           {step > 0 && <Button type="button" variant="secondary" onClick={() => go(step - 1)} className="min-h-14 px-5"><IconArrowLeft size={20} />Back</Button>}
+          {/* Distinct keys: without them React reuses one DOM button, so tapping Next on the last-but-one step turns it into a submit button mid-click and sends the form. */}
           {step < last ? (
-            <Button type="button" onClick={() => go(step + 1)} className="min-h-14 flex-1 text-lg">Next<IconArrowRight size={20} /></Button>
+            <Button key="next" type="button" onClick={() => go(step + 1)} className="min-h-14 flex-1 text-lg">Next<IconArrowRight size={20} /></Button>
           ) : (
-            <Button type="submit" disabled={busy} className="min-h-14 flex-1 text-lg">{busy ? "Checking…" : "Check this request"}</Button>
+            <Button key="submit" type="submit" disabled={busy} className="min-h-14 flex-1 text-lg">{busy ? "Checking…" : "Check this request"}</Button>
           )}
         </div>
       </div>

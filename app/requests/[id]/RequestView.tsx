@@ -193,7 +193,8 @@ export function RequestView({ id, paypalMode, paypalClientId, ngnRate }: { id: s
       <div>
         <p className="mb-1 text-sm font-bold uppercase tracking-[0.14em] text-primary">Payment request</p>
         <h1 className="text-3xl font-semibold sm:text-4xl">
-          <Money amount={r.amount} currency={r.currency} /> to {institution ? institution.name : <span className="break-all">{r.payee_email}</span>}
+          <Money amount={r.amount} currency={r.currency} />
+          <span className="mt-1 block text-xl font-medium text-muted sm:text-2xl">to {institution ? institution.name : <span className="[overflow-wrap:anywhere]">{r.payee_email}</span>}</span>
         </h1>
         <p className="mt-1.5 text-muted">≈ ₦{Math.round(Number(r.amount) * ngnRate).toLocaleString("en-NG")} (approximate) · asked by {claimedName}{sender ? ` · sent by ${sender.display_name}` : ""}</p>
         <div className="mt-3 flex flex-wrap gap-2">

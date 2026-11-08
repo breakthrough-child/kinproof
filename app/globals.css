@@ -106,7 +106,6 @@ button, a, input, select, textarea { touch-action: manipulation; }
 ::selection { background: var(--primary-soft); }
 
 /* Safe-area helpers for notched phones */
-.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
 .pt-safe { padding-top: env(safe-area-inset-top); }
 
 /* Paper grain: a barely-there texture so the page doesn't read as a flat screen */

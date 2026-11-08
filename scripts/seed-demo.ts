@@ -18,11 +18,18 @@ if (!url || !key || !password) {
   process.exit(1);
 }
 // Every PayPal email comes from the environment. No placeholders: a wrong payee in a sandbox run is worse than a failed seed.
-const missing = [...DEMO.users, ...DEMO.institutions].map((x) => x.envEmail).filter((name) => !process.env[name]?.trim());
+// The one exception is the public-figure example, which is optional: without its email that row is skipped with a warning.
+const OPTIONAL = new Set(["DEMO_FIGURE_PAYPAL_EMAIL"]);
+const missing = [...DEMO.users, ...DEMO.institutions].map((x) => x.envEmail).filter((name) => !OPTIONAL.has(name) && !process.env[name]?.trim());
 if (missing.length) {
   console.error(`Missing PayPal email env var${missing.length > 1 ? "s" : ""}: ${missing.join(", ")}. Set ${missing.length > 1 ? "them" : "it"} in .env.local (sandbox account emails) and run again.`);
   process.exit(1);
 }
+const institutions = DEMO.institutions.filter((i) => {
+  if (!OPTIONAL.has(i.envEmail) || process.env[i.envEmail]?.trim()) return true;
+  console.warn(`Warning: ${i.envEmail} is not set, so "${i.name}" is skipped. The public-figure rule will have no listed example.`);
+  return false;
+});
 const demoEmail = (x: { envEmail: string }): string => process.env[x.envEmail]!.trim();
 const db = createClient(url, key, { auth: { persistSession: false } });
 const ok = <T>(r: { data: T; error: { message: string } | null }, what: string): T => {
@@ -59,7 +66,7 @@ for (const u of DEMO.users) {
 }
 
 ok(await db.from("institutions").delete().in("name", DEMO.institutions.map((i) => i.name)), "clear institutions");
-ok(await db.from("institutions").insert(DEMO.institutions.map((i) => ({ name: i.name, kind: i.kind, city: i.city, country: "NG", paypal_email: demoEmail(i), aliases: i.aliases, verified: true, notes: "Demo sandbox business account" }))), "institutions");
+ok(await db.from("institutions").insert(institutions.map((i) => ({ name: i.name, kind: i.kind, city: i.city, country: "NG", paypal_email: demoEmail(i), aliases: i.aliases, verified: true, notes: "Demo sandbox business account" }))), "institutions");
 
 const existing = ok(await db.from("transfer_requests").select("id").eq("sender_member_id", memberIds.ada).eq("status", "released").limit(1), "history") as unknown[];
 if (existing.length === 0) {

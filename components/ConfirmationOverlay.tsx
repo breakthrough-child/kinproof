@@ -89,7 +89,7 @@ export function ConfirmationOverlay() {
       className="fixed inset-0 z-50 flex h-dvh flex-col bg-bg sm:items-center sm:justify-center sm:bg-ink/70 sm:p-6">
       <div className="sheet-up flex min-h-0 w-full flex-1 flex-col bg-bg sm:max-w-xl sm:flex-none sm:overflow-hidden sm:rounded-[28px] sm:shadow-2xl sm:max-h-[92dvh]">
         {/* Scrollable story: who, how much, what was said */}
-        <div className="pt-safe min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-5 sm:px-8 sm:pt-8">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-[max(1.5rem,env(safe-area-inset-top))] sm:px-8 sm:pt-8">
           <p className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.14em] text-caution">
             <span className="holding inline-block h-2.5 w-2.5 rounded-full bg-caution" />Money on hold · this needs you
           </p>
@@ -98,9 +98,9 @@ export function ConfirmationOverlay() {
             <h2 id="conf-title" className="text-2xl font-semibold leading-tight">{item.senderName} is sending <Money amount={r.amount} /> in your name</h2>
           </div>
           <p id="conf-q" className="mt-5 font-serif text-[1.65rem] font-semibold leading-snug sm:text-3xl">{question}</p>
-          <dl className="mt-5 grid grid-cols-2 gap-3 rounded-[16px] border border-line bg-surface p-4">
-            <div><dt className="text-sm text-muted">Amount</dt><dd className="font-serif text-3xl font-semibold tabular-nums"><Money amount={r.amount} currency={r.currency} /></dd></div>
-            <div className="min-w-0"><dt className="text-sm text-muted">To</dt><dd className="break-all text-base font-semibold">{r.payee_email}</dd></div>
+          <dl className="mt-5 space-y-3 rounded-[16px] border border-line bg-surface p-4">
+            <div><dt className="text-sm text-muted">Amount</dt><dd className="font-serif text-4xl font-semibold tabular-nums"><Money amount={r.amount} currency={r.currency} /></dd></div>
+            <div className="min-w-0 border-t border-line pt-3"><dt className="text-sm text-muted">Paying</dt><dd className="break-words text-lg font-semibold [overflow-wrap:anywhere]">{r.payee_email}</dd></div>
           </dl>
           {text && (
             <figure className="mt-3 rounded-[16px] border border-line bg-surface p-4">
@@ -121,7 +121,7 @@ export function ConfirmationOverlay() {
         </div>
 
         {/* Thumb zone: two huge buttons at the bottom of the screen, safe-area aware */}
-        <div className="pb-safe shrink-0 border-t border-line bg-surface px-5 pb-4 pt-4 sm:px-8 sm:pb-8">
+        <div className="shrink-0 border-t border-line bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 sm:px-8 sm:pb-8">
           <div className="grid gap-3">
             <Button disabled={busy} onClick={() => answer("confirmed")} className="min-h-[4.5rem] text-xl"><IconCheck size={26} />Yes, it was me</Button>
             <Button disabled={busy} variant="danger" onClick={() => answer("denied")} className="min-h-[4.5rem] text-xl"><IconX size={26} />No, that wasn&apos;t me</Button>

@@ -40,17 +40,17 @@ export function Nav({ name }: { name: string | null }) {
           <Link href="/" aria-label="Kinproof home" className="rounded-lg"><Logo /></Link>
           {name ? (
             <>
-              <nav aria-label="Main" className="hidden gap-1 md:flex">
+              <nav aria-label="Main" className="hidden gap-0.5 md:flex lg:gap-1">
                 {links.map((l) => (
-                  <Link key={l.href} href={l.href} aria-current={active(l.href) ? "page" : undefined}
-                    className={`flex min-h-11 items-center gap-2 rounded-xl px-3 font-medium ${active(l.href) ? "bg-primarysoft text-primary" : "text-muted hover:bg-surface2 hover:text-ink"}`}>
-                    <l.Icon size={20} />{l.long}
+                  <Link key={l.href} href={l.href} aria-label={l.long} title={l.long} aria-current={active(l.href) ? "page" : undefined}
+                    className={`flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-xl px-2.5 font-medium lg:px-3 ${active(l.href) ? "bg-primarysoft text-primary" : "text-muted hover:bg-surface2 hover:text-ink"}`}>
+                    <l.Icon size={22} /><span className="hidden lg:inline">{l.long}</span>
                   </Link>
                 ))}
               </nav>
               <div className="ml-auto flex items-center gap-2 text-sm">
-                <Avatar name={name} size={34} />
-                <span className="hidden text-muted sm:inline">Signed in as <strong className="text-ink">{name}</strong></span>
+                <Avatar name={name} size={34} className="md:max-lg:hidden" />
+                <span className="hidden text-muted xl:inline">Signed in as <strong className="text-ink">{name}</strong></span>
                 <button onClick={signOut} className="min-h-11 rounded-xl px-3 font-semibold text-primary hover:bg-primarysoft">Sign out</button>
               </div>
             </>
@@ -62,11 +62,11 @@ export function Nav({ name }: { name: string | null }) {
         </div>
       </header>
       {name && (
-        <nav aria-label="Main (mobile)" className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 backdrop-blur-sm md:hidden">
+        <nav aria-label="Main (mobile)" className="fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)] border-t border-line bg-surface/95 backdrop-blur-sm md:hidden">
           <ul className="mx-auto grid max-w-lg grid-cols-5">
             {links.map((l) => (
               <li key={l.href}>
-                <Link href={l.href} aria-current={active(l.href) ? "page" : undefined}
+                <Link href={l.href} aria-label={l.long} aria-current={active(l.href) ? "page" : undefined}
                   className={`flex min-h-16 flex-col items-center justify-center gap-0.5 px-1 text-[0.72rem] font-semibold leading-tight ${active(l.href) ? "text-primary" : "text-muted"}`}>
                   <span className={`grid h-7 w-12 place-items-center rounded-full ${active(l.href) ? "bg-primarysoft" : ""}`}><l.Icon size={22} /></span>
                   {l.label}

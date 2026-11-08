@@ -45,6 +45,9 @@ PayPal's authorize/capture split is a natural fit for "pause money while we veri
 Verified payee identities for public figures and brands, Xoom for production cross-border payouts, a push/SMS/WhatsApp fallback for confirmation, trusted-contact escalation, and more languages.
 
 ## Try it
-- Demo: _URL_ (one-click demo sign-in as Ada and Chidi; use the sandbox buyer account in the PayPal popup, see README)
-- Code: _GitHub URL_ (MIT licensed)
+- Demo: https://kinproof-nine.vercel.app (one-click demo sign-in as Ada and Chidi; use the sandbox buyer account in the PayPal popup, see README)
+- Code: https://github.com/breakthrough-child/kinproof (MIT licensed)
 - Video: _YouTube/Vimeo URL_
+
+## Screenshots
+Phone and desktop, light and dark, are in `docs/screenshots/` (verdict, Chidi's confirmation card, the stamp, landing, send flow, inbox, circle, payees, settings). Live demo: https://kinproof-nine.vercel.app · Code: https://github.com/breakthrough-child/kinproof

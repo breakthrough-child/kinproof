@@ -6,8 +6,18 @@ Kinproof stops AI voice-clone and impersonation scams by verifying the *real per
 
 Built for the Devpost **PayPal AI Hackathon**. Sandbox only: **no real money moves.**
 
-- **Hosted demo:** _TBD: add the deployed URL after deployment (see [Deployment](#deployment))_
+- **Hosted demo:** https://kinproof-nine.vercel.app · **Repo:** https://github.com/breakthrough-child/kinproof
 - **Demo video script:** [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) · **Devpost text:** [docs/SUBMISSION.md](docs/SUBMISSION.md) · **Sandbox run log:** [docs/SANDBOX_VERIFICATION.md](docs/SANDBOX_VERIFICATION.md)
+
+## What it looks like
+
+Designed as "a family's front door": a warm paper palette, a serif for headings, and a seal that stamps every outcome. Phone first, with a bottom navigation bar and thumb-reach buttons.
+
+| The verdict, in plain words | Chidi's confirmation card | The stamp lands | The story, from the landing page |
+|---|---|---|---|
+| ![Verdict](docs/screenshots/05-verdict-mobile-light.jpg) | ![Confirmation card](docs/screenshots/06-confirmation-card-mobile-light.jpg) | ![Blocked](docs/screenshots/08-request-blocked-mobile-light.jpg) | ![Landing](docs/screenshots/01-landing-mobile-light.jpg) |
+
+Every key screen at 390px and 1440px, light and dark, is in [`docs/screenshots/`](docs/screenshots). Regenerate them with `pnpm screenshots` (see the header of `scripts/screenshots.mjs`). Design notes and contrast checks: [docs/DESIGN.md](docs/DESIGN.md).
 
 ## The problem
 
@@ -121,10 +131,11 @@ Every variable is documented in [.env.example](.env.example). Key ones:
 | API | Why |
 |---|---|
 | **Log in with PayPal** (OAuth + userinfo) | Proves each member controls a specific PayPal account → their verified `payer_id` + email. This is the identity the payee check compares against. |
-| **Orders v2** `POST /v2/checkout/orders` with `intent: "AUTHORIZE"`, `payee.email_address`, `custom_id` = request id | Creates the payment as a *hold*, not a charge. |
+| **Orders v2** `POST /v2/checkout/orders` with `intent: "AUTHORIZE"` and `custom_id` = request id (no `payee`: the hold sits on Kinproof's own merchant account) | Creates the payment as a *hold*, not a charge. PayPal only lets the owning merchant capture or void, so the recipient is paid afterwards. |
 | **PayPal JS SDK** buttons (`intent=authorize`) + `POST /v2/checkout/orders/{id}/authorize` | Buyer approval, then funds are authorized. |
 | **Payments v2** `POST /v2/payments/authorizations/{id}/capture` | "Yes, it was me" / low-risk auto-release → money moves. |
 | **Payments v2** `POST /v2/payments/authorizations/{id}/void` | "No" / expiry / redirect → money released back. |
+| **Payouts v1** `POST /v1/payments/payouts` (idempotent per request) | After a capture, forwards the money to the recipient. "Sent" means the payout was accepted. |
 | **Webhooks** + `verify-webhook-signature` | Optional audit/recovery, idempotent by event id. |
 
 `PayPal-Request-Id` idempotency keys are sent on create, authorize, capture and void. Authorizations have a **3-day honor period** (capturable up to 29 days); the confirmation window is minutes, so holds are always resolved well inside it. USD only (sandbox doesn't support NGN); naira is a display-only approximate label.
