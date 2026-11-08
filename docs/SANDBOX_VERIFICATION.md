@@ -33,9 +33,25 @@ Request `ef8f06d1-c755-4061-bfed-0bbb06ceeb35`: St. Luke's deposit message, $350
 | Payout to Chidi | batch `TS7MUUR9SCX9E`, one item, $350.00: **`SUCCESS`** (a single batch, so no double payment) |
 | **Final status** | released / captured / paid out |
 
-Not checked: Chidi's sandbox balance in the PayPal dashboard.
+Not checked: the recipients' sandbox balances in the PayPal dashboard (Chidi, St. Luke's). Capture and payout were confirmed through the API.
 
 **A bug this run found, now fixed.** Chidi's confirmation and the page's reconcile-on-read both ran capture-then-payout within a second. The timeline showed `captured` twice and a spurious `payout_failed` ("User business error"), which was PayPal rejecting the duplicate payout batch id. No money was duplicated. The second caller now backs off when the request is already released (`lib/services/transfers.ts`), with a test for overlapping confirm and reconcile.
+
+## Flow C: lost phone, redirect to the hospital (PASS)
+Request `3daf0abb-f64f-4c61-91ee-a215a0e361c1`: "my phone fell, new number, I'm at St Luke's, they need a deposit right now", $600 to a non-Chidi account. The app offered **St. Luke's Hospital** as a verified payee.
+
+| Step | Observed |
+|---|---|
+| Live Gemini analysis | risk **high**; redirect offer shown for St. Luke's Hospital |
+| Ada approves the hold | order `5TT11191CX891150W` → authorization `7GN05015YD1530813`, PayPal **`CREATED`**, $600.00 |
+| Ada taps "Pay St. Luke's Hospital directly" | original request `redirected` (timeline `voided`, `redirected`); PayPal authorization **`VOIDED`** |
+| New request `d15e4510-8878-495f-b9ad-3579973e0700` | $600 to St. Luke's Hospital, verified institution, risk low; order `6HE802279E0158544` on merchant `CR8GUUJPNZLEJ` |
+| Ada approves the second payment | authorization `0KY14724RE5502926`; verified institution, so no confirmation asked (`auto_release`) |
+| Capture | `7CA70857527411846`, PayPal authorization **`CAPTURED`**, capture **`COMPLETED`**, $600.00 |
+| Payout to the hospital's verified account | batch `WAGFNV43SHWS2`, one item, $600.00: **`SUCCESS`** |
+| **Final status** | original redirected / voided; new request released / captured / paid out |
+
+Timeline for the new request shows one `captured` and one `paid_out`, no `payout_failed`: the race fix held.
 
 ## Earlier failures that shaped the design (old sandbox app, kept for the record)
 | PayPal debug id | What happened | What we learned |
@@ -45,7 +61,6 @@ Not checked: Chidi's sandbox balance in the PayPal dashboard.
 | payout batch `RGMCTMRLUK9L4` | `PENDING`, then `DENIED` | The first app belonged to a locked or closed business account; a new app under a healthy account fixed it |
 
 ## Not run (be honest about these)
-- [ ] **Flow C, redirect to a hospital:** void the original hold and pay a verified institution through a new order and payout. Covered by automated tests in mock mode only.
 - [ ] **Expiry:** no answer for 15 minutes, with the cron voiding the hold. Covered in mock mode only; the cron runs daily on Vercel Hobby, and expiry also happens lazily on read.
 - [ ] **Webhooks:** delivery and signature verification (`PAYMENT.AUTHORIZATION.VOIDED`, `PAYMENT.CAPTURE.COMPLETED`) against the new app. Handlers are tested for idempotency in mock mode.
 - [ ] **Log in with PayPal linking:** the demo members are seeded as verified. A real link through the OAuth popup was not exercised.
