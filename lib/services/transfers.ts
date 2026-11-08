@@ -241,8 +241,14 @@ async function capture(requestId: string, actor: string | null): Promise<Transfe
   if (!req.paypal_capture_id) {
     try {
       const cap = await getPayPal().capture(req.paypal_authorization_id, `${req.id}:capture`);
-      req = await store.updateRequest(req.id, { paypal_capture_id: cap.captureId });
-      await event(req.id, "captured", actor, { captureId: cap.captureId });
+      // A concurrent caller (the confirmation and a page-load reconcile can overlap) may have recorded it already.
+      const seen = (await store.getRequest(req.id))!;
+      if (seen.status === "released") return seen;
+      if (seen.paypal_capture_id) req = seen;
+      else {
+        req = await store.updateRequest(req.id, { paypal_capture_id: cap.captureId });
+        await event(req.id, "captured", actor, { captureId: cap.captureId });
+      }
     } catch (e) {
       await event(req.id, "capture_failed", actor, { error: (e as Error).message });
       throw new ServiceError("PayPal could not complete the payment. Nothing was lost; the money stays on hold.", 502, "paypal_error");
@@ -255,6 +261,10 @@ async function capture(requestId: string, actor: string | null): Promise<Transfe
     await event(req.id, "paid_out", actor, { payoutBatchId: out.payoutBatchId, status: out.status });
     return next ?? (await store.getRequest(req.id))!;
   } catch (e) {
+    // If a concurrent caller already got the payout accepted and released the request, this failure is just PayPal
+    // refusing the duplicate batch id: nothing to report and nothing to retry.
+    const now = (await store.getRequest(req.id))!;
+    if (now.status === "released") return now;
     await event(req.id, "payout_failed", actor, { error: (e as Error).message });
     throw new ServiceError("The payment was collected but could not be sent to the recipient yet. It will be retried; nothing is lost.", 502, "paypal_error");
   }

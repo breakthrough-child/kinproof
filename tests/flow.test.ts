@@ -63,6 +63,15 @@ describe("genuine path", () => {
     expect(done.status).toBe("released");
     expect((await store.listEvents(held.id)).filter((e) => e.type === "captured")).toHaveLength(1);
   });
+  it("overlapping confirm and page-load reconcile pay out once and record one capture", async () => {
+    const held = await startHeld({ message: "Mum I'm at St Luke's, they need a deposit.", amount: 350 });
+    await Promise.all([respondToConfirmation(CHIDI, held.id, "confirmed"), getRequestView(ADA, held.id), getRequestView(ADA, held.id)]);
+    const types = (await store.listEvents(held.id)).map((e) => e.type);
+    expect(types.filter((t) => t === "captured")).toHaveLength(1);
+    expect(types.filter((t) => t === "paid_out")).toHaveLength(1);
+    expect(types).not.toContain("payout_failed");
+    expect((await store.getRequest(held.id))!.status).toBe("released");
+  });
   it("low risk, verified payee, under cap auto-releases", async () => {
     const held = await startHeld({ amount: 50 });
     expect(held.status).toBe("released");
