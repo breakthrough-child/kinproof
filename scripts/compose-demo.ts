@@ -15,7 +15,7 @@ import { chromium } from "@playwright/test";
 import { BEATS, LIVE_URL, REPO_URL, STAT, STAT_SOURCE, TAGLINE, type Beat } from "./demo-beats.ts";
 
 const ROOT = new URL("../demo-output/", import.meta.url).pathname;
-const RAW = `${ROOT}raw/`;
+const RAW = `${ROOT}raw/`; // raw/a/ and raw/b/: one take per scene, each with its own videos and timeline.json
 const AUDIO = `${ROOT}audio/`;
 const WORK = `${ROOT}work/`;
 const OUT = `${ROOT}kinproof-demo.mp4`;
@@ -114,7 +114,7 @@ async function renderPng(html: string, file: string, transparent = false) {
 }
 
 // ---------- ffmpeg assembly ----------
-interface Timeline { ada: string; chidi: string; beats: Record<string, { ada?: [number, number][]; chidi?: [number, number][] }>; }
+interface Take { ada: string; chidi: string; beats: Record<string, { ada?: [number, number][]; chidi?: [number, number][] }>; }
 let shared: Awaited<ReturnType<typeof chromium.launch>>;
 const sum = (segs: [number, number][]) => segs.reduce((a, [s, e]) => a + (e - s), 0);
 
@@ -127,8 +127,10 @@ function videoChain(inputIdx: number, segs: [number, number][], label: string, s
 }
 
 async function main() {
-  if (!existsSync(`${RAW}timeline.json`)) throw new Error("No footage yet. Run `pnpm record:demo` first.");
-  const tl: Timeline = JSON.parse(await readFile(`${RAW}timeline.json`, "utf8"));
+  const takes: Take[] = [];
+  for (const sc of ["a", "b"]) if (existsSync(`${RAW}${sc}/timeline.json`)) takes.push(JSON.parse(await readFile(`${RAW}${sc}/timeline.json`, "utf8")));
+  if (!takes.length) throw new Error("No footage yet. Run `pnpm record:demo` first.");
+  const takeFor = (id: string) => takes.find((t) => t.beats[id]);
   await rm(WORK, { recursive: true, force: true });
   await mkdir(WORK, { recursive: true });
 
@@ -149,7 +151,6 @@ async function main() {
   const clips: string[] = [];
   const scriptLines: string[] = [];
   let clock = 0;
-  const idle = tl.beats.idle?.chidi ?? [[0, 3]];
 
   for (const b of BEATS) {
     const wav = narr(b);
@@ -173,8 +174,10 @@ async function main() {
         "-map", "[v]", "-map", "[a]", "-t", D.toFixed(3), "-r", String(FPS), "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", out,
       ]);
     } else {
-      const seg = tl.beats[b.id];
-      if (!seg?.ada?.length) throw new Error(`Footage for beat "${b.id}" is missing from timeline.json. Re-run pnpm record:demo.`);
+      const take = takeFor(b.id);
+      const seg = take?.beats[b.id];
+      if (!take || !seg?.ada?.length) throw new Error(`Footage for beat "${b.id}" is missing. Re-record its scene: pnpm record:demo -- --scene ${b.id.startsWith("a-") ? "a" : "b"}`);
+      const idle = take.beats.idle?.chidi ?? [[0, 3]];
       const adaSegs = seg.ada;
       const chidiSegs = seg.chidi?.length ? seg.chidi : [idle[0]];
       const L = Math.max(sum(adaSegs), seg.chidi?.length ? sum(chidiSegs) : 0);
@@ -192,7 +195,7 @@ async function main() {
       ].join(";");
       ff([
         "-loop", "1", "-framerate", String(FPS), "-t", D.toFixed(3), "-i", `${WORK}bg.png`,
-        "-i", tl.ada, "-i", tl.chidi,
+        "-i", take.ada, "-i", take.chidi,
         "-loop", "1", "-framerate", String(FPS), "-t", D.toFixed(3), "-i", `${WORK}ov-${b.id}.png`,
         ...voiceArgs,
         "-filter_complex", chain, "-map", "[v]", "-map", "[a]", "-t", D.toFixed(3), "-r", String(FPS),

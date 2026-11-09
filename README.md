@@ -168,6 +168,25 @@ Every variable is documented in [.env.example](.env.example). Key ones:
 - The Gemini model default is the `gemini-flash-latest` alias taken from the `@google/genai` README. `ai.google.dev` was unreachable from the build environment, so the exact current Flash model id was not confirmed against the docs. Set `GEMINI_MODEL` to pin one. Live Gemini calls are covered by mocked-HTTP tests only until you run them with a real key.
 - Roadmap: verified payee identities for public figures; **Xoom** for production cross-border (NGN) payouts; SMS/WhatsApp fallback; audio deepfake signals as an *extra* hint (never the decision); more languages.
 
+## Recording the demo
+
+The demo video is built by three scripts. You only ever do the PayPal approvals by hand.
+
+**Prerequisites:** `ffmpeg` (`sudo apt install ffmpeg`), Chrome or Chromium (set `PW_CHROMIUM_PATH` if it isn't at `/usr/bin/google-chrome`), a desktop session (the recorder opens two real browser windows), and `GEMINI_API_KEY` in `.env.local` for the voiceover.
+
+```bash
+pnpm voiceover        # Gemini text-to-speech: one clip per beat in demo-output/audio (cached)
+pnpm record:demo      # records Ada (desktop) and Chidi (phone) against the live site
+pnpm compose:demo     # builds demo-output/kinproof-demo.mp4 (fails if over 2:55)
+```
+
+- **Env:** `DEMO_BASE_URL` (default `https://kinproof-nine.vercel.app`), `PW_CHROMIUM_PATH`, `DEMO_VOICE` (default `Sulafat`), `DEMO_TTS_MODEL`.
+- **The PayPal step is manual.** When a PayPal popup opens, the recorder shows a desktop notification, plays a sound, and waits. Sign in with the sandbox **buyer** account and approve. The script never types credentials, and the popup's own video is deleted so your sign-in is never kept. It carries on by itself once the request is held. Keep your hands off the other two windows: they ignore stray clicks, but a take can still be spoiled.
+- **Retake one scene:** `pnpm record:demo -- --scene a` (the scam) or `-- --scene b` (the real emergency). Each scene is its own take, so a bad one doesn't cost you the other.
+- **Your own voice instead:** `demo-output/voiceover-script.txt` has every line with its timing. Record yourself, save it as `demo/voiceover.mp3`, delete `demo-output/audio/`, and re-run `pnpm compose:demo`.
+- **Free-tier note:** Gemini TTS allows roughly 10 requests per model per day, so `pnpm voiceover` caches clips and only regenerates a beat whose text changed (`-- --only beat-id` or `-- --force` to override).
+- **Upload:** upload `demo-output/kinproof-demo.mp4` to YouTube and set it to **Public** (Unlisted or Private won't count for Devpost). Script and timings: [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md).
+
 ## Debugging on a phone
 
 Every browser API (Notification, service worker, Push, Web Audio, MediaRecorder, vibration) is accessed only through `lib/browser.ts`, which feature-detects and try/catches, so a missing or blocked API degrades quietly instead of crashing. If something still fails, `DEMO_MODE=true` makes the error boundaries (`app/error.tsx`, `app/global-error.tsx`, a boundary around the confirmation overlay) and a runtime-error banner show the **actual error message, digest and stack** instead of a generic notice. `DEMO_MODE` is inlined into the client at build time, so set it before `pnpm build` / deploy. Turn it off for real users.
